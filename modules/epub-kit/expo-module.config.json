@@ -1,0 +1,17 @@
+{
+  "platforms": [
+    "apple",
+    "android",
+    "web"
+  ],
+  "apple": {
+    "modules": [
+      "EpubKitModule"
+    ]
+  },
+  "android": {
+    "modules": [
+      "expo.modules.epubkit.EpubKitModule"
+    ]
+  }
+}
