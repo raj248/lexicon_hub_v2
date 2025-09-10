@@ -16,6 +16,7 @@ export default function Library() {
           {book}
         </Text>
       ))}
+      {books.length === 0 && <Text>No books found</Text>}
     </SafeAreaView>
   );
 }
