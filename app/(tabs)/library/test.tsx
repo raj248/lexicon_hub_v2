@@ -3,7 +3,10 @@ import { useEffect, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '~/components/Button';
 import { Text } from '~/components/nativewindui/Text';
+import { findOpfPath } from '~/epub-core/parsers/containerParser';
+import { parseOPF } from '~/epub-core/parsers/opfParserXml';
 import * as FileUtil from '~/modules/FileUtil';
+import scanAndAddBooks from '~/utils/scanAndAddBooks';
 
 export default function Library() {
   const [books, setBooks] = useState<string[]>([]);
@@ -29,6 +32,24 @@ export default function Library() {
     });
   }, []);
 
+  const handle = async () => {
+    FileUtil.RequestStoragePermission();
+    books.map((book) => {
+      console.log('book', book);
+      findOpfPath(book).then(async (opfPath) => {
+        if (opfPath) {
+          // console.log('opfPath', opfPath);
+          const opfFile = await FileUtil.readFileFromZip(book, opfPath);
+          //   console.log('opfFile', opfFile);
+          parseOPF(opfFile).then((data) => {
+            console.log('data', data);
+          });
+        }
+      });
+    });
+    scanAndAddBooks();
+  };
+
   return (
     <SafeAreaView style={{ flex: 1 }} edges={['bottom', 'left', 'right', 'top']}>
       <Text className="text-lg">Library</Text>
@@ -40,9 +61,9 @@ export default function Library() {
       <Text>{books.length} books found</Text>
       {books.length === 0 && <Text variant={'body'}>No books found</Text>}
       <Button
-        title="Start Test"
+        title="Begin"
         onPress={() => {
-          router.push('/(tabs)/library/test');
+          handle();
         }}
       />
     </SafeAreaView>

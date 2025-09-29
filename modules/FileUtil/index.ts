@@ -77,3 +77,42 @@ export async function saveCoverImage(base64String: string, title: string): Promi
     return '';
   }
 }
+
+export async function saveCoverV2(base64String: string, title: string): Promise<string> {
+  try {
+    const filename = title.replace(/\s+/g, '_') + '.jpg'; // sanitize filename
+    const path = `${FileSystem.documentDirectory}${filename}`;
+
+    // Remove data URI prefix
+    const base64Data = base64String.replace(/^data:image\/\w+;base64,/, '');
+
+    // Write temporary file
+    const tempPath = `${FileSystem.cacheDirectory}${filename}`;
+    await FileSystem.writeAsStringAsync(tempPath, base64Data, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+
+    // Resize and compress directly to file
+    const manipulated = await ImageManipulator.manipulateAsync(
+      tempPath,
+      [{ resize: { width: 500 } }], // resize width to 500px
+      {
+        compress: 0.7, // quality
+        format: SaveFormat.JPEG,
+        base64: false, // write directly to file
+      }
+    );
+
+    // Move optimized image to final destination
+    await FileSystem.moveAsync({
+      from: manipulated.uri,
+      to: path,
+    });
+
+    console.log('Cover image saved:', path);
+    return path;
+  } catch (error) {
+    console.error('Error processing cover image:', error);
+    return '';
+  }
+}
