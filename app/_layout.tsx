@@ -1,27 +1,22 @@
 import '../global.css';
 import 'expo-dev-client';
 import { ThemeProvider as NavThemeProvider } from '@react-navigation/native';
-import { Icon } from '@roninoss/icons';
 
 import { ActionSheetProvider } from '@expo/react-native-action-sheet';
 
-import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
-
-import { Link, Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { Pressable, View } from 'react-native';
+import { Stack } from 'expo-router';
 
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { ThemeToggle } from '~/components/ThemeToggle';
-import { cn } from '~/lib/cn';
 import { useColorScheme, useInitialAndroidBarSync } from '~/lib/useColorScheme';
 import { NAV_THEME } from '~/theme';
+import AppStatusBar from '~/components/AppStatusBar';
+import { Provider as PaperProvider } from 'react-native-paper';
+import { Feather } from '@expo/vector-icons';
+import { darkTheme, lightTheme } from '~/theme/theme';
 
-export {
-  // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
-} from 'expo-router';
+export { ErrorBoundary } from 'expo-router';
 
 export default function RootLayout() {
   useInitialAndroidBarSync();
@@ -29,15 +24,14 @@ export default function RootLayout() {
 
   return (
     <>
-      <StatusBar
-        key={`root-status-bar-${isDarkColorScheme ? 'light' : 'dark'}`}
-        style={isDarkColorScheme ? 'light' : 'dark'}
-      />
-      {/* WRAP YOUR APP WITH ANY ADDITIONAL PROVIDERS HERE */}
-      {/* <ExampleProvider> */}
+      <AppStatusBar />
 
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <BottomSheetModalProvider>
+        <PaperProvider
+          theme={isDarkColorScheme ? darkTheme : lightTheme}
+          settings={{
+            icon: (props) => <Feather {...props} />, // override icon component
+          }}>
           <ActionSheetProvider>
             <NavThemeProvider value={NAV_THEME[colorScheme]}>
               <Stack screenOptions={SCREEN_OPTIONS}>
@@ -46,10 +40,8 @@ export default function RootLayout() {
               </Stack>
             </NavThemeProvider>
           </ActionSheetProvider>
-        </BottomSheetModalProvider>
+        </PaperProvider>
       </GestureHandlerRootView>
-
-      {/* </ExampleProvider> */}
     </>
   );
 }

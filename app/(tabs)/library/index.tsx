@@ -9,14 +9,14 @@ export default function Library() {
     if (files) setBooks(files);
   });
   return (
-    <SafeAreaView style={{ flex: 1 }} edges={['bottom', 'left', 'right']}>
+    <SafeAreaView style={{ flex: 1 }} edges={['bottom', 'left', 'right', 'top']}>
       <Text className="text-lg">Library</Text>
       {books.map((book, index) => (
         <Text key={index} className="text-base">
           {book}
         </Text>
       ))}
-      {books.length === 0 && <Text>No books found</Text>}
+      {books.length === 0 && <Text variant={'body'}>No books found</Text>}
     </SafeAreaView>
   );
 }
