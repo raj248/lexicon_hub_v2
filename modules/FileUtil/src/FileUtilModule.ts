@@ -1,6 +1,5 @@
 import { NativeModule, requireNativeModule } from 'expo';
 
-
 declare class FileUtilModule extends NativeModule {
   RequestStoragePermission(): Promise<boolean>;
   ScanFiles(): Promise<string[]>;
