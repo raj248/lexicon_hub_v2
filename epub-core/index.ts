@@ -71,7 +71,7 @@ export class EPUBHandler {
     const tocData = await readFileFromZip(this.zipPath, this.tocPath);
     if (!tocData) throw new Error('TOC file not found');
 
-    const opf = await parseOPF(opfData as string);
+    const opf = await parseOPF(opfData as string, this.opfPath);
     const toc = await parseTOC(tocData as string);
 
     this.metadata = opf.metadata;

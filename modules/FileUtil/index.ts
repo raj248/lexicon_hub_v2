@@ -43,6 +43,17 @@ export async function checkFilePermission(): Promise<boolean> {
   return true;
 }
 
+export async function parseOPFFromBook(bookPath: string): Promise<string> {
+  return await FileUtilModule.parseOPFFromBook(bookPath)
+    .then((result) => {
+      return result;
+    })
+    .catch((error) => {
+      console.error('Error parsing OPF from book:', error);
+      return '';
+    });
+}
+
 export async function saveCoverImage(base64String: string, title: string): Promise<string> {
   const filename = title.replace(/\s+/g, '_') + '.jpg'; // Sanitize filename
   const path = `${FileSystem.documentDirectory}${filename}`;

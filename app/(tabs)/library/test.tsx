@@ -90,6 +90,7 @@ export default function Library() {
 
     await Promise.all(
       books.map(async (book) => {
+        const currentLap = performance.now();
         console.log('Processing book:', book);
 
         try {
@@ -102,8 +103,7 @@ export default function Library() {
           const opfFile = await FileUtil.readFileFromZip(book, opfPath);
           const data = await parseOPF(opfFile, opfPath);
 
-          const currentLap = performance.now();
-          const lapTime = currentLap - lap;
+          const lapTime = performance.now() - lap;
           lapTimes.push(lapTime);
 
           console.log(
@@ -114,7 +114,7 @@ export default function Library() {
             'ms'
           );
 
-          lap = currentLap;
+          lap = performance.now();
         } catch (err) {
           console.warn('Error processing book', book, err);
         }
@@ -155,6 +155,43 @@ export default function Library() {
       }
     });
   };
+
+  const testModule = async () => {
+    FileUtil.RequestStoragePermission();
+    const startTime = performance.now();
+    const result = await FileUtil.parseOPFFromBook(books[0]);
+    // books.map(async (book) => {
+    //   const result = await FileUtil.parseOPFFromBook(book);
+    //   console.log('result', result.metadata.title, result.metadata.coverImage);
+    // });
+
+    books.forEach((book) => {
+      FileUtil.parseOPFFromBook(book).then((result) => {
+        console.log(
+          'result',
+          result.metadata.title,
+          result.metadata.coverImage ?? result.metadata.title + ' (no cover)'
+        );
+      });
+    });
+
+    console.log('✅ Total testModule time:', (performance.now() - startTime).toFixed(2), 'ms');
+  };
+
+  const testLegacy = async () => {
+    const startTime = performance.now();
+    const path = await findOpfPath(books[0]);
+    console.log('path', path);
+    if (!path) {
+      console.log('No OPF found for', books[0]);
+      return;
+    }
+    const opfFile = await FileUtil.readFileFromZip(books[0], path);
+    const data = await parseOPF(opfFile, path);
+    console.log('data', data.metadata.coverImage ?? data.metadata.title + ' (no cover)');
+    console.log('✅ Total testModule time:', (performance.now() - startTime).toFixed(2), 'ms');
+  };
+
   return (
     <SafeAreaView style={{ flex: 1 }} edges={['bottom', 'left', 'right', 'top']}>
       <Text className="text-lg">Library</Text>
@@ -187,6 +224,28 @@ export default function Library() {
         title="clear all books"
         onPress={() => {
           useBookStore.getState().debugClear();
+        }}
+      />
+      <Button
+        title="test module"
+        onPress={() => {
+          FileUtil.parseOPFFromBook(books[0]).then((result) => {
+            console.log('result', result);
+          });
+        }}
+      />
+
+      <Button
+        title="test module (timed)"
+        onPress={() => {
+          testModule();
+        }}
+      />
+
+      <Button
+        title="test legacy (timed)"
+        onPress={() => {
+          testLegacy();
         }}
       />
     </SafeAreaView>
