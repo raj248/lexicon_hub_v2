@@ -27,6 +27,23 @@ export async function parseOPF(opfXml: string, opfPath: string): Promise<OPFData
     coverImage: undefined,
   };
 
+  // --- Get unique-identifier ---
+  let uniqueIdentifier: string | undefined;
+  const uidAttr = pkg['unique-identifier'];
+  if (uidAttr) {
+    // uidAttr is the id of the identifier element, e.g., "BookId"
+    const idMap = metadataXml['dc:identifier'];
+    if (Array.isArray(idMap)) {
+      // multiple <dc:identifier> elements
+      const uidElement = idMap.find((el: any) => el?.id === uidAttr);
+      uniqueIdentifier = extractText(uidElement);
+    } else if (idMap && idMap.id === uidAttr) {
+      uniqueIdentifier = extractText(idMap);
+    }
+  }
+
+  extractedMetadata.identifier = uniqueIdentifier || extractedMetadata.identifier;
+
   const manifestArray = [].concat(manifestXml || []);
   const metaArray = [].concat(metadataXml.meta || []);
   const spineArray = [].concat(spineXml || []);

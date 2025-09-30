@@ -1,83 +1,83 @@
-// import Toast from 'react-native-toast-message';
 import { useBookStore } from '~/store/bookStore';
-
-import * as Crypto from 'expo-crypto';
 import {
+  readFileFromZip,
   RequestStoragePermission,
-  saveCoverImageV2,
   saveCoverImage,
   ScanFiles,
 } from '~/modules/FileUtil';
-
-import { EPUBHandler } from '~/epub-core';
-import { TocEntry } from '~/epub-core/types';
+import { parseOPF } from '~/epub-core/parsers/opfParserXml';
+import { findOpfPath } from '~/epub-core/parsers/containerParser';
 
 export default async function scanAndAddBooks() {
   try {
     const hasPermission = await RequestStoragePermission();
     if (!hasPermission) {
-      // Toast.show({
-      //   type: "error",
-      //   text1: "Storage permission denied",
-      //   text2: "Please enable storage permission in settings",
-      // });
       console.log('Storage permission denied');
       return;
     }
 
-    const books = await ScanFiles();
-    console.log('Found books:', books.length);
+    const bookPaths = await ScanFiles();
+    console.log('Found books:', bookPaths.length);
 
-    const existingBooks = useBookStore.getState().books; // Fetch existing books
-    const existingPaths = new Set(Object.values(existingBooks).map((book) => book.path)); // Store paths for quick lookup
+    const existingBooks = useBookStore.getState().books;
+    const existingPaths = new Set(Object.values(existingBooks).map((b) => b.path));
 
-    const batchSize = 20;
-    let batch = [];
-    const epub = new EPUBHandler();
+    // Process all books concurrently but safely
+    const processBook = async (bookPath: string) => {
+      if (existingPaths.has(bookPath)) return null;
 
-    for (const bookPath of books) {
-      if (existingPaths.has(bookPath)) continue;
-      await epub.loadFile(bookPath, true);
+      try {
+        const opfPath = await findOpfPath(bookPath);
+        if (!opfPath) {
+          console.log('No OPF file found inbook:', bookPath);
+          return null;
+        }
+        const opfFile = await readFileFromZip(bookPath, opfPath);
+        const { metadata } = await parseOPF(opfFile, opfPath);
 
-      const metadata = await epub.getMetadata();
-      if (!metadata) {
-        // Toast.show({
-        //   type: "error",
-        //   text1: "Failed to open book",
-        //   text2: bookPath,
-        // });
-        continue;
+        if (!metadata) {
+          console.log('Failed to open book:', bookPath);
+          return null;
+        }
+
+        const newBook = {
+          ...metadata,
+          path: bookPath,
+          addedAt: Date.now(),
+          id: metadata.identifier,
+          coverImage: metadata.coverImage, // initially may be undefined
+        };
+
+        // Immediately add book to store for UI feedback
+        useBookStore.getState().addBooks([newBook]);
+
+        // Save cover image asynchronously if exists
+        if (newBook.coverImage) {
+          const coverBase64 = await readFileFromZip(bookPath, newBook.coverImage);
+          if (coverBase64) {
+            const savedCover = await saveCoverImage(coverBase64, metadata.title);
+            // Update store with the cover image without blocking UI
+            useBookStore.getState().updateBook(newBook.id, { coverImage: savedCover });
+          }
+        }
+
+        return newBook;
+      } catch (err) {
+        console.warn('Error processing book:', bookPath, err);
+        return null;
       }
-      const id = await Crypto.digestStringAsync(
-        Crypto.CryptoDigestAlgorithm.SHA1,
-        metadata.title + metadata.author
-      );
-      const toc: TocEntry[] = await epub.getToc();
+    };
 
-      const coverImageBase64 = (await epub.getCoverImage()) as string;
-      // metadata.coverImage = await saveCoverImage(coverImageBase64, metadata.title);
-      metadata.coverImage = await saveCoverImageV2(coverImageBase64, metadata.title);
-
-      const newBook = {
-        ...metadata,
-        path: bookPath,
-        addedAt: Date.now(),
-        id,
-        // chapters: toc,
-      };
-      batch.push(newBook);
-
-      if (batch.length >= batchSize) {
-        useBookStore.getState().addBooks(batch);
-        batch = []; // Clear batch
-        await new Promise((res) => setTimeout(res, 10)); // Small delay to allow UI updates
-      }
+    // Limit concurrency to prevent blocking too many books at once
+    const concurrency = 5;
+    let index = 0;
+    while (index < bookPaths.length) {
+      const batch = bookPaths.slice(index, index + concurrency);
+      await Promise.all(batch.map((p) => processBook(p)));
+      index += concurrency;
     }
 
-    // Add remaining books
-    if (batch.length > 0) {
-      useBookStore.getState().addBooks(batch);
-    }
+    console.log('✅ Finished scanning and adding books');
   } catch (error) {
     console.error('Error in scanAndAddBooks:', error);
   }

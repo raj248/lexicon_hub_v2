@@ -13,7 +13,7 @@ import scanAndAddBooks from '~/utils/scanAndAddBooks';
 import Animated, { Easing, FadeInUp, LinearTransition } from 'react-native-reanimated';
 import { Pressable, View } from 'react-native';
 import { useColorScheme } from '~/lib/useColorScheme';
-import { Book } from '~/store/bookStore';
+import { Book, useBookStore } from '~/store/bookStore';
 
 export default function Library() {
   const [books, setBooks] = useState<string[]>([]);
@@ -150,7 +150,7 @@ export default function Library() {
       if (opfPath) {
         const opfFile = await FileUtil.readFileFromZip(books[i], opfPath);
         parseOPF(opfFile, opfPath).then((data) => {
-          console.log('data', data.spine);
+          console.log('data', data.metadata);
         });
       }
     });
@@ -181,6 +181,12 @@ export default function Library() {
         title="get opf"
         onPress={() => {
           opf();
+        }}
+      />
+      <Button
+        title="clear all books"
+        onPress={() => {
+          useBookStore.getState().debugClear();
         }}
       />
     </SafeAreaView>
