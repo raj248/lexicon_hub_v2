@@ -114,18 +114,20 @@ export async function parseOPF(opfXml: string, opfPath: string): Promise<OPFData
 
   if (isValidImage(coverHref)) extractedMetadata.coverImage = resolveHref(opfPath, coverHref);
 
-  // Build spine
+  // --- Build spine with only id and resolved href ---
   const spineArray = Array.isArray(spineXml) ? spineXml : [spineXml];
   const spine: Spine[] = spineArray
-    .map((itemref: any) =>
-      itemref.idref && manifestMap[itemref.idref]
-        ? {
-            ...manifestMap[itemref.idref],
-            href: resolveHref(opfPath, manifestMap[itemref.idref].href),
-          }
-        : null
-    )
-    .filter(Boolean);
+    .map((itemref: any) => {
+      const idref = itemref.idref;
+      if (idref && manifestMap[idref]?.href) {
+        return {
+          id: idref,
+          href: resolveHref(opfPath, manifestMap[idref].href),
+        };
+      }
+      return null;
+    })
+    .filter(Boolean) as Spine[];
 
   return { metadata: extractedMetadata, spine };
 }

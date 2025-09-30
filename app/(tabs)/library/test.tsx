@@ -84,11 +84,12 @@ export default function Library() {
           //   console.log('opfFile', opfFile);
           parseOPF(opfFile, opfPath).then((data) => {
             // console.log('data', data);
-            console.log(
-              'data.metadata',
-              data.metadata.coverImage ??
-                data.metadata.title + (data.metadata.coverImage ?? 'undefined')
-            );
+            // console.log(
+            //   'data.metadata',
+            //   data.metadata.coverImage ??
+            //     data.metadata.title + (data.metadata.coverImage ?? 'undefined')
+            // );
+            // console.log('data.spine', data.spine);
           });
         }
       });
@@ -108,7 +109,7 @@ export default function Library() {
       if (opfPath) {
         const opfFile = await FileUtil.readFileFromZip(books[i], opfPath);
         parseOPF(opfFile, opfPath).then((data) => {
-          console.log('data', data.metadata);
+          console.log('data', data.spine);
         });
       }
     });
