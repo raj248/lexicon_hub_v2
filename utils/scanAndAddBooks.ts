@@ -2,7 +2,12 @@
 import { useBookStore } from '~/store/bookStore';
 
 import * as Crypto from 'expo-crypto';
-import { RequestStoragePermission, saveCoverImage, ScanFiles } from '~/modules/FileUtil';
+import {
+  RequestStoragePermission,
+  saveCoverImageV2,
+  saveCoverImage,
+  ScanFiles,
+} from '~/modules/FileUtil';
 
 import { EPUBHandler } from '~/epub-core';
 import { TocEntry } from '~/epub-core/types';
@@ -50,7 +55,8 @@ export default async function scanAndAddBooks() {
       const toc: TocEntry[] = await epub.getToc();
 
       const coverImageBase64 = (await epub.getCoverImage()) as string;
-      metadata.coverImage = await saveCoverImage(coverImageBase64, metadata.title);
+      // metadata.coverImage = await saveCoverImage(coverImageBase64, metadata.title);
+      metadata.coverImage = await saveCoverImageV2(coverImageBase64, metadata.title);
 
       const newBook = {
         ...metadata,

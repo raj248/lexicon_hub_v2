@@ -78,8 +78,12 @@ export async function saveCoverImage(base64String: string, title: string): Promi
   }
 }
 
-export async function saveCoverV2(base64String: string, title: string): Promise<string> {
+export async function saveCoverImageV2(base64String: string, title: string): Promise<string> {
   try {
+    if (!title) {
+      console.error('Title is missing in saveCoverV2');
+      return '';
+    }
     const filename = title.replace(/\s+/g, '_') + '.jpg'; // sanitize filename
     const path = `${FileSystem.documentDirectory}${filename}`;
 

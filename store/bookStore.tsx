@@ -1,8 +1,8 @@
-import { create } from "zustand";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { createJSONStorage, persist } from "zustand/middleware";
+import { create } from 'zustand';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createJSONStorage, persist } from 'zustand/middleware';
 
-export type Category = "Light Novel" | "Web Novel" | "Manga" | "Comic" | "Book";
+export type Category = 'Light Novel' | 'Web Novel' | 'Manga' | 'Comic' | 'Book';
 
 export type Book = {
   id: string;
@@ -12,7 +12,7 @@ export type Book = {
   language?: string;
   category?: string[];
   description?: string;
-  path?: string;  // Path for local files (if EPUB/PDF)
+  path?: string; // Path for local files (if EPUB/PDF)
   volumes?: string; // Only for Light Novels (list of volume file paths)
   addedAt?: number;
   externalLink?: string; // Store external sources for the book
@@ -51,7 +51,7 @@ export const useBookStore = create<BookStore & { hydrated: boolean }>()(
               ...state.books,
               [book.id]: {
                 ...book,
-                category: book.category ?? ["Book"], // Set default category if not provided
+                category: book.category ?? ['Book'], // Set default category if not provided
               },
             },
           };
@@ -59,7 +59,7 @@ export const useBookStore = create<BookStore & { hydrated: boolean }>()(
 
       addBooks: (books: Book[]) =>
         set((state) => {
-          console.log("🚀 addBooks CALLED with:", books.length, "books");
+          console.log('🚀 addBooks CALLED with:', books.length, 'books');
 
           const newBooks = { ...state.books };
           let addedCount = 0;
@@ -67,19 +67,17 @@ export const useBookStore = create<BookStore & { hydrated: boolean }>()(
             if (!newBooks[book.id]) {
               newBooks[book.id] = {
                 ...book,
-                category: book.category ?? ["Book"],
+                category: book.category ?? ['Book'],
               };
               addedCount++;
             }
           });
 
           console.log(`✅ ${addedCount} new books added`);
-          console.log("📚 Total books after update:", Object.keys(newBooks).length);
+          console.log('📚 Total books after update:', Object.keys(newBooks).length);
 
           return { books: newBooks };
         }),
-
-
 
       updateBook: (id, data) =>
         set((state) => ({
@@ -95,9 +93,10 @@ export const useBookStore = create<BookStore & { hydrated: boolean }>()(
       debugClear: () => set({ books: {} }),
     }),
     {
-      name: "book-storage", // AsyncStorage key
+      name: 'book-storage', // AsyncStorage key
       storage: createJSONStorage(() => AsyncStorage),
       onRehydrateStorage: (state) => {
+        console.log('Hydrated books...');
         state.hydrated = true; // Mark hydration as complete
       },
     }
