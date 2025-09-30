@@ -11,6 +11,7 @@ export default {
     },
     plugins: [
       'expo-router',
+      'expo-font',
       [
         'expo-dev-launcher',
         {
