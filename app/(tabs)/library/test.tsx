@@ -75,25 +75,66 @@ export default function Library() {
 
   const handleBegin = async () => {
     FileUtil.RequestStoragePermission();
-    books.map((book) => {
-      console.log('book', book);
-      findOpfPath(book).then(async (opfPath) => {
-        if (opfPath) {
-          // console.log('opfPath', opfPath);
-          const opfFile = await FileUtil.readFileFromZip(book, opfPath);
-          //   console.log('opfFile', opfFile);
-          parseOPF(opfFile, opfPath).then((data) => {
-            // console.log('data', data);
-            // console.log(
-            //   'data.metadata',
-            //   data.metadata.coverImage ??
-            //     data.metadata.title + (data.metadata.coverImage ?? 'undefined')
-            // );
-            // console.log('data.spine', data.spine);
-          });
-        }
-      });
+    FileUtil.ScanFiles().then((files) => {
+      if (files) setBooks(files);
     });
+
+    if (!books.length) {
+      console.log('No books to process');
+      return;
+    }
+
+    const startTime = performance.now();
+    const lapTimes: number[] = []; // store each book's lap time
+    let lap = performance.now();
+
+    await Promise.all(
+      books.map(async (book) => {
+        console.log('Processing book:', book);
+
+        try {
+          const opfPath = await findOpfPath(book);
+          if (!opfPath) {
+            console.log('No OPF found for', book);
+            return;
+          }
+
+          const opfFile = await FileUtil.readFileFromZip(book, opfPath);
+          const data = await parseOPF(opfFile, opfPath);
+
+          const currentLap = performance.now();
+          const lapTime = currentLap - lap;
+          lapTimes.push(lapTime);
+
+          console.log(
+            'Book metadata:',
+            data.metadata.coverImage ?? data.metadata.title + ' (no cover)',
+            '| Lap Time:',
+            lapTime.toFixed(2),
+            'ms'
+          );
+
+          lap = currentLap;
+        } catch (err) {
+          console.warn('Error processing book', book, err);
+        }
+      })
+    );
+
+    // Compute min, max, avg
+    if (lapTimes.length > 0) {
+      const min = Math.min(...lapTimes);
+      const max = Math.max(...lapTimes);
+      const avg = lapTimes.reduce((a, b) => a + b, 0) / lapTimes.length;
+
+      console.log(
+        `📊 Lap stats — min: ${min.toFixed(2)} ms, max: ${max.toFixed(2)} ms, avg: ${avg.toFixed(
+          2
+        )} ms`
+      );
+    }
+
+    console.log('✅ Total handleBegin time:', (performance.now() - startTime).toFixed(2), 'ms');
   };
 
   const scan = () => {

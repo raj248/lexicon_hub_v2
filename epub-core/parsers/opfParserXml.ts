@@ -1,28 +1,19 @@
 import { XMLParser } from 'fast-xml-parser';
 import { Metadata, OPFData, Spine } from '../types';
 
-/**
- * @param opfXml The content of the OPF file
- * @param opfPath The full path of the OPF file inside the EPUB
- */
 export async function parseOPF(opfXml: string, opfPath: string): Promise<OPFData> {
-  const parser = new XMLParser({
-    ignoreAttributes: false,
-    attributeNamePrefix: '',
-  });
-
+  const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '' });
   const parsed = parser.parse(opfXml);
   const pkg = parsed.package;
+
   const metadataXml = pkg.metadata || {};
   const manifestXml = pkg.manifest?.item || [];
   const spineXml = pkg.spine?.itemref || [];
 
-  // Helper to extract text from strings, objects, or arrays
   const extractText = (value: any): string => {
     if (!value) return '';
     if (typeof value === 'string') return value;
-    if (Array.isArray(value)) return value.map(extractText).join(', ');
-    if (typeof value === 'object' && '#text' in value) return value['#text'];
+    if (typeof value === 'object') return value['#text'] ?? '';
     return '';
   };
 
@@ -36,94 +27,73 @@ export async function parseOPF(opfXml: string, opfPath: string): Promise<OPFData
     coverImage: undefined,
   };
 
-  // Convert manifest to array and lookup map
-  const manifestArray = Array.isArray(manifestXml) ? manifestXml : [manifestXml];
-  const manifestMap: Record<string, any> = {};
-  manifestArray.forEach((item: any) => {
-    if (item.id && item.href) manifestMap[item.id] = item;
-  });
+  const manifestArray = [].concat(manifestXml || []);
+  const metaArray = [].concat(metadataXml.meta || []);
+  const spineArray = [].concat(spineXml || []);
 
   const isValidImage = (href?: string) => href?.match(/\.(jpg|jpeg|png|gif|webp)$/i);
 
-  // Convert relative href to absolute path inside EPUB based on OPF location
-  // Replace path.dirname + path.join
-  const resolveHref = (opfPath: string, href?: string): string | undefined => {
+  const resolveHref = (href?: string) => {
     if (!href) return undefined;
-
-    // Extract OPF folder
-    const lastSlashIndex = opfPath.lastIndexOf('/');
-    const opfDir = lastSlashIndex >= 0 ? opfPath.slice(0, lastSlashIndex) : '';
-
-    // Combine folder + href
-    const combined = opfDir ? `${opfDir}/${href}` : href;
-
-    // Normalize double slashes
-    return combined.replace(/\/+/g, '/');
+    const lastSlash = opfPath.lastIndexOf('/');
+    const opfDir = lastSlash >= 0 ? opfPath.slice(0, lastSlash) : '';
+    return (opfDir ? `${opfDir}/${href}` : href).replace(/\/+/g, '/');
   };
 
-  // 1️⃣ Try <meta name="cover">
-  let coverHref: string | undefined;
+  // --- Build manifest map with absolute hrefs ---
+  const manifestMap: Record<string, any> = {};
+  manifestArray.forEach((item: any) => {
+    if (item.id && item.href) {
+      manifestMap[item.id] = { ...item, absoluteHref: resolveHref(item.href) };
+    }
+  });
 
-  // 1️⃣ Try <meta name="cover">
-  const metaArray = Array.isArray(metadataXml.meta)
-    ? metadataXml.meta
-    : metadataXml.meta
-      ? [metadataXml.meta]
-      : [];
+  // --- Cover selection ---
+  // --- Cover selection ---
+  let coverHref: string | undefined;
   const coverMeta = metaArray.find((m: any) => m?.name === 'cover');
 
-  if (coverMeta?.content) {
-    // Try lookup by ID first (old way)
-    if (manifestMap[coverMeta.content]?.href) {
-      coverHref = manifestMap[coverMeta.content].href;
-    } else {
-      // Fallback: treat it as a relative href path directly
-      coverHref = coverMeta.content;
+  if ((coverMeta as any)?.content) {
+    // 1️⃣ If content is an ID in manifest
+    if (manifestMap[(coverMeta as any).content]?.absoluteHref) {
+      coverHref = manifestMap[(coverMeta as any).content].absoluteHref;
+    }
+    // 2️⃣ Fallback: treat content as relative href
+    else if (isValidImage((coverMeta as any).content)) {
+      coverHref = resolveHref((coverMeta as any).content);
     }
   }
 
-  // 2️⃣ Fallback to common IDs
+  // --- Other fallbacks if coverHref not found ---
   if (!isValidImage(coverHref)) {
-    for (const id of ['cover', 'cover-image']) {
-      if (manifestMap[id]?.href && isValidImage(manifestMap[id].href)) {
-        coverHref = manifestMap[id].href;
-        break;
-      }
+    const candidates = [
+      manifestMap['cover'],
+      manifestMap['cover-image'],
+      manifestArray.find((item: any) => item.properties === 'cover-image'),
+      manifestArray.find((item: any) => typeof item.id === 'string' && isValidImage(item.id)),
+    ].filter(Boolean);
+
+    if (candidates.length > 0) {
+      coverHref = candidates[0].absoluteHref ?? candidates[0].href;
     }
   }
 
-  // 3️⃣ Fallback to properties="cover-image"
-  if (!isValidImage(coverHref)) {
-    const coverItem = manifestArray.find((item: any) => item.properties === 'cover-image');
-    if (coverItem?.href && isValidImage(coverItem.href)) coverHref = coverItem.href;
-  }
-
-  // 4️⃣ Fallback: find item in manifest whose ID looks like an image file
-  if (!isValidImage(coverHref)) {
-    const coverById = manifestArray.find(
-      (item: any) => typeof item.id === 'string' && isValidImage(item.id)
-    );
-    if (coverById?.href) coverHref = coverById.href;
-  }
-
-  // 5️⃣ Fallback: first image in manifest
+  // --- LAST fallback: first image in manifest ---
   if (!isValidImage(coverHref)) {
     const firstImage = manifestArray.find((item: any) => isValidImage(item.href));
-    if (firstImage?.href) coverHref = firstImage.href;
+    if ((firstImage as any)?.href) {
+      coverHref = resolveHref((firstImage as any).href);
+    }
   }
 
-  if (isValidImage(coverHref)) extractedMetadata.coverImage = resolveHref(opfPath, coverHref);
+  if (isValidImage(coverHref)) extractedMetadata.coverImage = coverHref;
 
-  // --- Build spine with only id and resolved href ---
-  const spineArray = Array.isArray(spineXml) ? spineXml : [spineXml];
+  // --- Build spine ---
   const spine: Spine[] = spineArray
     .map((itemref: any) => {
       const idref = itemref.idref;
-      if (idref && manifestMap[idref]?.href) {
-        return {
-          id: idref,
-          href: resolveHref(opfPath, manifestMap[idref].href),
-        };
+      if (idref && manifestMap[idref]?.absoluteHref) {
+        return { id: idref, href: manifestMap[idref].absoluteHref };
       }
       return null;
     })
