@@ -153,7 +153,6 @@ class FileUtilModule : Module() {
 
             val opfXml = zipFile.getInputStream(opfEntry).bufferedReader().use { it.readText() }
 
-            // Base directory for resolving relative hrefs
             val lastSlash = opfPath.lastIndexOf('/')
             val opfDir = if (lastSlash >= 0) opfPath.substring(0, lastSlash) else ""
 
@@ -179,18 +178,13 @@ class FileUtilModule : Module() {
                 val properties: String?,
                 val absoluteHref: String
             )
-              
+
             val manifestList = mutableListOf<ManifestItem>()
             val metaList = mutableListOf<Pair<String, String>>() // name -> content
-
-            val manifestMap = mutableMapOf<String, String>()
+            val manifestMap = mutableMapOf<String, ManifestItem>()
             val spineList = mutableListOf<Map<String, String>>()
-
-            var currentId: String? = null
-            var currentHref: String? = null
-            var inSpine = false
-
             val textBuffer = StringBuilder()
+            var inSpine = false
 
             while (eventType != XmlPullParser.END_DOCUMENT) {
                 when (eventType) {
@@ -199,12 +193,14 @@ class FileUtilModule : Module() {
                         textBuffer.clear()
                         when (currentTag) {
                             "item" -> {
-                                currentId = parser.getAttributeValue(null, "id")
-                                currentHref = parser.getAttributeValue(null, "href")
-                                if (currentId != null && currentHref != null) {
-                                    // Resolve relative hrefs
-                                    val absoluteHref = if (opfDir.isNotEmpty()) "$opfDir/$currentHref" else currentHref
-                                    manifestMap[currentId] = absoluteHref.replace(Regex("/+"), "/")
+                                val id = parser.getAttributeValue(null, "id")
+                                val href = parser.getAttributeValue(null, "href")
+                                val properties = parser.getAttributeValue(null, "properties")
+                                if (href != null) {
+                                    val absoluteHref = if (opfDir.isNotEmpty()) "$opfDir/$href" else href
+                                    val item = ManifestItem(id, href, properties, absoluteHref.replace(Regex("/+"), "/"))
+                                    manifestList.add(item)
+                                    if (id != null) manifestMap[id] = item
                                 }
                             }
                             "itemref" -> {
@@ -214,7 +210,7 @@ class FileUtilModule : Module() {
                                         spineList.add(
                                             mapOf(
                                                 "id" to idref,
-                                                "href" to (manifestMap[idref] ?: idref)
+                                                "href" to (manifestMap[idref]?.absoluteHref ?: idref)
                                             )
                                         )
                                     }
@@ -224,17 +220,13 @@ class FileUtilModule : Module() {
                             "meta" -> {
                                 val nameAttr = parser.getAttributeValue(null, "name")
                                 val contentAttr = parser.getAttributeValue(null, "content")
-                                if (nameAttr == "cover" && contentAttr != null) {
-                                    coverHref = manifestMap[contentAttr] ?: contentAttr
+                                if (nameAttr != null && contentAttr != null) {
+                                    metaList.add(nameAttr to contentAttr)
                                 }
                             }
                         }
                     }
-                    XmlPullParser.TEXT -> {
-                        val text = parser.text
-                        textBuffer.append(parser.text)
-
-                    }
+                    XmlPullParser.TEXT -> textBuffer.append(parser.text)
                     XmlPullParser.END_TAG -> {
                         when (parser.name) {
                             "dc:title" -> metadataTitle = textBuffer.toString().trim()
@@ -246,17 +238,42 @@ class FileUtilModule : Module() {
                         }
                         textBuffer.clear()
                         currentTag = null
-
                     }
                 }
                 eventType = parser.next()
             }
 
-            // --- Step 3: Fallbacks for cover ---
-            if (coverHref != null && !Regex("""\.(jpg|jpeg|png|gif|webp)$""", RegexOption.IGNORE_CASE).matches(coverHref)) {
-                // pick first image from manifest if cover invalid
-                val firstImage = manifestMap.values.find { it.matches(Regex(""".*\.(jpg|jpeg|png|gif|webp)$""", RegexOption.IGNORE_CASE)) }
-                if (firstImage != null) coverHref = firstImage
+            // --- Step 3: Resolve cover image with JS-style fallbacks ---
+            fun isValidImage(href: String?) = href?.matches(Regex(""".*\.(jpg|jpeg|png|gif|webp)$""", RegexOption.IGNORE_CASE)) == true
+
+            // 1️⃣ meta[name=cover]
+            val coverMeta = metaList.find { it.first == "cover" }
+            coverHref = coverMeta?.let { (_, content) ->
+                manifestMap[content]?.absoluteHref ?: if (isValidImage(content)) "$opfDir/$content" else null
+            }
+
+            // 2️⃣ fallback candidates
+            if (!isValidImage(coverHref)) {
+                val candidates = listOfNotNull(
+                    manifestMap["cover"]?.absoluteHref,
+                    manifestMap["cover-image"]?.absoluteHref,
+                    manifestList.find { it.properties == "cover-image" }?.absoluteHref,
+                    manifestList.find { it.id?.let { isValidImage(it) } == true }?.absoluteHref
+                )
+                if (candidates.isNotEmpty()) coverHref = candidates[0]
+            }
+
+            // 2️⃣b additional fallback: look for id = "Cover.[imgextension]"
+            if (!isValidImage(coverHref)) {
+                val coverIdItem = manifestList.find { 
+                    it.id?.matches(Regex("""Cover\.(jpg|jpeg|png|gif|webp)""", RegexOption.IGNORE_CASE)) == true 
+                }
+                if (coverIdItem != null) coverHref = coverIdItem.absoluteHref
+            }
+
+            // 3️⃣ last fallback: first image in manifest
+            if (!isValidImage(coverHref)) {
+                coverHref = manifestList.find { isValidImage(it.href) }?.absoluteHref
             }
 
             val opfData = mapOf(
@@ -267,7 +284,7 @@ class FileUtilModule : Module() {
                     "date" to (metadataDate ?: ""),
                     "identifier" to (metadataIdentifier ?: ""),
                     "contributor" to (metadataContributor ?: ""),
-                    "coverImage" to coverHref
+                    "coverImage" to (coverHref ?: "")
                 ),
                 "spine" to spineList
             )
@@ -278,7 +295,6 @@ class FileUtilModule : Module() {
             promise.reject("E_OPF_PARSE_FAILED", "Failed to parse OPF: ${e.message}", e)
         }
     }
-
 
   }
 }

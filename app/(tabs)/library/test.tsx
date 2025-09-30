@@ -91,7 +91,7 @@ export default function Library() {
     await Promise.all(
       books.map(async (book) => {
         const currentLap = performance.now();
-        console.log('Processing book:', book);
+        // console.log('Processing book:', book);
 
         try {
           const opfPath = await findOpfPath(book);
@@ -108,6 +108,7 @@ export default function Library() {
 
           console.log(
             'Book metadata:',
+            data.metadata.title,
             data.metadata.coverImage ?? data.metadata.title + ' (no cover)',
             '| Lap Time:',
             lapTime.toFixed(2),
@@ -169,9 +170,10 @@ export default function Library() {
       FileUtil.parseOPFFromBook(book).then((result) => {
         console.log(
           'result',
-          result.metadata.title,
-          result.metadata.coverImage ?? result.metadata.title + ' (no cover)'
+          // result.metadata.title,
+          result?.metadata.coverImage ?? result?.metadata.title + ' (no cover)'
         );
+        // console.log('result', result?.spine);
       });
     });
 

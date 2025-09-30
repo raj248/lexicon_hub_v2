@@ -2,7 +2,6 @@ import { XMLParser } from 'fast-xml-parser';
 import { Metadata, OPFData, Spine } from '../types';
 
 export async function parseOPF(opfXml: string, opfPath: string): Promise<OPFData> {
-  const start = performance.now();
   const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '' });
   const parsed = parser.parse(opfXml);
   const pkg = parsed.package;
@@ -10,7 +9,6 @@ export async function parseOPF(opfXml: string, opfPath: string): Promise<OPFData
   const metadataXml = pkg.metadata || {};
   const manifestXml = pkg.manifest?.item || [];
   const spineXml = pkg.spine?.itemref || [];
-  console.log('took ', performance.now() - start, 'ms to parse OPF');
 
   // --- Extract metadata ---
   const extractText = (value: any): string => {

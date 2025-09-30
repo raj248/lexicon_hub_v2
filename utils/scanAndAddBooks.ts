@@ -4,6 +4,7 @@ import {
   RequestStoragePermission,
   saveCoverImage,
   ScanFiles,
+  parseOPFFromBook,
 } from '~/modules/FileUtil';
 import { parseOPF } from '~/epub-core/parsers/opfParserXml';
 import { findOpfPath } from '~/epub-core/parsers/containerParser';
@@ -27,18 +28,13 @@ export default async function scanAndAddBooks() {
       if (existingPaths.has(bookPath)) return null;
 
       try {
-        const opfPath = await findOpfPath(bookPath);
-        if (!opfPath) {
-          console.log('No OPF file found inbook:', bookPath);
-          return null;
-        }
-        const opfFile = await readFileFromZip(bookPath, opfPath);
-        const { metadata } = await parseOPF(opfFile, opfPath);
+        const file = await parseOPFFromBook(bookPath);
 
-        if (!metadata) {
+        if (!file) {
           console.log('Failed to open book:', bookPath);
           return null;
         }
+        const { metadata } = file;
 
         const newBook = {
           ...metadata,

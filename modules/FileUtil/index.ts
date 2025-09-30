@@ -2,6 +2,7 @@ import FileUtilModule from './src/FileUtilModule';
 import { SaveFormat, ImageManipulator } from 'expo-image-manipulator';
 import * as FileSystem from 'expo-file-system';
 import { PermissionsAndroid, Platform } from 'react-native';
+import { OPFData } from '~/epub-core/types';
 
 export async function ScanFiles(): Promise<string[]> {
   return await FileUtilModule.ScanFiles();
@@ -43,14 +44,14 @@ export async function checkFilePermission(): Promise<boolean> {
   return true;
 }
 
-export async function parseOPFFromBook(bookPath: string): Promise<string> {
+export async function parseOPFFromBook(bookPath: string): Promise<OPFData | null> {
   return await FileUtilModule.parseOPFFromBook(bookPath)
     .then((result) => {
       return result;
     })
     .catch((error) => {
       console.error('Error parsing OPF from book:', error);
-      return '';
+      return null;
     });
 }
 
