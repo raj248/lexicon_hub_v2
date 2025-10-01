@@ -13,7 +13,7 @@ export default function AppStatusBar() {
       backgroundColor={
         isDarkColorScheme
           ? '#0b0220' // zaffre-100 (deep indigo, dark theme bg)
-          : '#f72585' // rose (primary brand color)
+          : '#b4c1f8' // rose (primary brand color)
       }
     />
   );

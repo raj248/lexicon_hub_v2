@@ -29,8 +29,10 @@ export default function TabLayout() {
         tabBarActiveTintColor: colors.foreground,
         tabBarShowLabel: false,
         tabBarStyle: {
+          marginHorizontal: 10,
+          borderRadius: 5,
           bottom: insets.bottom,
-          backgroundColor: isDarkColorScheme ? '#0b0220' : '#f72585',
+          backgroundColor: isDarkColorScheme ? '#0b0220' : '#b4c1f8',
           elevation: 5,
           shadowColor: '#000',
           shadowOpacity: 0.1,

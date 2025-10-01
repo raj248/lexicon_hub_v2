@@ -1,6 +1,22 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createJSONStorage, persist } from 'zustand/middleware';
+import { createJSONStorage, persist, StateStorage } from 'zustand/middleware';
+import { MMKV, Mode } from 'react-native-mmkv';
+
+export const storage = new MMKV();
+
+const zustandStorage: StateStorage = {
+  setItem: (name, value) => {
+    return storage.set(name, value);
+  },
+  getItem: (name) => {
+    const value = storage.getString(name);
+    return value ?? null;
+  },
+  removeItem: (name) => {
+    return storage.delete(name);
+  },
+};
 
 export type Category = 'Light Novel' | 'Web Novel' | 'Manga' | 'Comic' | 'Book';
 
@@ -96,7 +112,7 @@ export const useBookStore = create<BookStore & { hydrated: boolean }>()(
     }),
     {
       name: 'book-storage', // AsyncStorage key
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => zustandStorage),
       onRehydrateStorage: (state) => {
         console.log('Hydrated books...');
         state.hydrated = true; // Mark hydration as complete
