@@ -15,10 +15,16 @@ import AppStatusBar from '~/components/AppStatusBar';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { Feather } from '@expo/vector-icons';
 import { darkTheme, lightTheme } from '~/theme/theme';
+import { useEffect } from 'react';
+import { RequestStoragePermission } from '~/modules/FileUtil';
 
 export { ErrorBoundary } from 'expo-router';
 
 export default function RootLayout() {
+  useEffect(() => {
+    RequestStoragePermission();
+  }, []);
+
   useInitialAndroidBarSync();
   const { colorScheme, isDarkColorScheme } = useColorScheme();
 
