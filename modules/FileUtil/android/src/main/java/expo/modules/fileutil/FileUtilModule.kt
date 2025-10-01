@@ -23,6 +23,9 @@ import org.jsoup.Jsoup
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import java.io.FileOutputStream
 
 
 class FileUtilModule : Module() {
@@ -294,6 +297,67 @@ class FileUtilModule : Module() {
         } catch (e: Exception) {
             promise.reject("E_OPF_PARSE_FAILED", "Failed to parse OPF: ${e.message}", e)
         }
+    }
+    
+    AsyncFunction("optimizeCoverImage") { epubPath: String, coverPathInZip: String, promise: Promise ->
+      try {
+        val zipFile = ZipFile(epubPath)
+        val entry: ZipEntry? = zipFile.getEntry(coverPathInZip)
+
+        if (entry == null) {
+          zipFile.close()
+          promise.reject("E_COVER_NOT_FOUND", "Cover image not found in EPUB.", null)
+          return@AsyncFunction
+        }
+
+        val inputStream = zipFile.getInputStream(entry)
+
+        // Decode image
+        val originalBitmap = BitmapFactory.decodeStream(inputStream)
+        inputStream.close()
+        zipFile.close()
+
+        if (originalBitmap == null) {
+          promise.reject("E_DECODE_FAILED", "Failed to decode cover image.", null)
+          return@AsyncFunction
+        }
+
+        // Resize (keep aspect ratio, max width 512px for example)
+        val maxWidth = 512
+        val scale = if (originalBitmap.width > maxWidth) {
+          maxWidth.toFloat() / originalBitmap.width.toFloat()
+        } else 1f
+
+        val targetWidth = (originalBitmap.width * scale).toInt()
+        val targetHeight = (originalBitmap.height * scale).toInt()
+        val resizedBitmap = Bitmap.createScaledBitmap(originalBitmap, targetWidth, targetHeight, true)
+
+        // Save to cache dir
+        val cacheDir = appContext.cacheDirectory ?: throw Exception("No cache directory available")
+
+        // Extract just the filename (without directories)
+        val originalName = epubPath.substringAfterLast("/")
+        // Remove extension
+        val baseName = originalName.substringBeforeLast(".")
+        // Sanitize
+        val safeBaseName = baseName.replace(Regex("[^A-Za-z0-9._-]"), "_")
+
+        // Final filename: cover_[filename].jpg
+        val outFile = File(cacheDir, "cover_${safeBaseName}.jpg")
+
+        FileOutputStream(outFile).use { out ->
+          resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 80, out) // compress at 80% quality
+        }
+
+        resizedBitmap.recycle()
+        if (resizedBitmap != originalBitmap) originalBitmap.recycle()
+
+        // Return path
+        promise.resolve(outFile.absolutePath)
+
+      } catch (e: Exception) {
+        promise.reject("E_OPTIMIZE_FAILED", "Failed to optimize cover image: ${e.message}", e)
+      }
     }
 
   }

@@ -5,6 +5,7 @@ import {
   saveCoverImage,
   ScanFiles,
   parseOPFFromBook,
+  extractCoverImage,
 } from '~/modules/FileUtil';
 import { parseOPF } from '~/epub-core/parsers/opfParserXml';
 import { findOpfPath } from '~/epub-core/parsers/containerParser';
@@ -49,12 +50,15 @@ export default async function scanAndAddBooks() {
 
         // Save cover image asynchronously if exists
         if (newBook.coverImage) {
-          const coverBase64 = await readFileFromZip(bookPath, newBook.coverImage);
-          if (coverBase64) {
-            const savedCover = await saveCoverImage(coverBase64, metadata.title);
-            // Update store with the cover image without blocking UI
-            useBookStore.getState().updateBook(newBook.id, { coverImage: savedCover });
-          }
+          const cover = await extractCoverImage(bookPath, newBook.coverImage);
+          if (cover) newBook.coverImage = cover;
+          console.log('Cover Image: ', cover);
+          // const coverBase64 = await readFileFromZip(bookPath, newBook.coverImage);
+          // if (coverBase64) {
+          // const savedCover = await saveCoverImage(coverBase64, metadata.title);
+          // Update store with the cover image without blocking UI
+          // useBookStore.getState().updateBook(newBook.id, { coverImage: savedCover });
+          // }
         }
 
         return newBook;

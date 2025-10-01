@@ -7,6 +7,7 @@ declare class FileUtilModule extends NativeModule {
   readFileFromZip(zipFilePath: string, filePath: string, type: string): Promise<string>;
   readChapterFromZip(zipPath: string, chapterPath: string): Promise<string>;
   parseOPFFromBook(bookPath: string): Promise<OPFData>;
+  optimizeCoverImage(bookPath: string, imagePath: string): Promise<string>;
 }
 
 // This call loads the native module object from the JSI.

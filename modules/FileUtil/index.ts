@@ -55,6 +55,16 @@ export async function parseOPFFromBook(bookPath: string): Promise<OPFData | null
     });
 }
 
+export async function extractCoverImage(bookPath: string, imagePath: string): Promise<string> {
+  return await FileUtilModule.optimizeCoverImage(bookPath, imagePath)
+    .then((result) => {
+      return result;
+    })
+    .catch((error) => {
+      console.error('Error extracting cover image:', error);
+      return '';
+    });
+}
 export async function saveCoverImage(base64String: string, title: string): Promise<string> {
   const filename = title.replace(/\s+/g, '_') + '.jpg'; // Sanitize filename
   const path = `${FileSystem.documentDirectory}${filename}`;
