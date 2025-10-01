@@ -390,5 +390,95 @@ class FileUtilModule : Module() {
       }
     }
 
+    AsyncFunction("prepareChapter") { epubPath: String, chapterHref: String, promise: Promise ->
+        try {
+            val cacheDir = File(appContext.cacheDirectory, epubPath.substringAfterLast("/").substringBeforeLast("."))
+            if (!cacheDir.exists()) cacheDir.mkdirs()
+
+            val zipFile = ZipFile(epubPath)
+            val entry: ZipEntry? = zipFile.getEntry(chapterHref)
+
+            if (entry == null) {
+                zipFile.close()
+                promise.reject("E_CHAPTER_NOT_FOUND", "Chapter $chapterHref not found in EPUB.", null)
+                return@AsyncFunction
+            }
+
+            val chapterHtml = zipFile.getInputStream(entry).bufferedReader().use { it.readText() }
+
+            // --- Parse XHTML using Jsoup ---
+            val doc = Jsoup.parse(chapterHtml)
+
+            // --- Handle images ---
+            doc.select("img").forEach { img ->
+                val src = img.attr("src")
+                if (src.isNotEmpty()) {
+                    // Resolve zip path relative to chapter
+                    val resourceZipPath = File(chapterHref).parent + "/" + src
+                    val resourceEntry = zipFile.getEntry(resourceZipPath)
+                    if (resourceEntry != null) {
+                        val resourceBytes = zipFile.getInputStream(resourceEntry).readBytes()
+
+                        // Prepare target cache file
+                        val targetFile = File(cacheDir, resourceZipPath)
+                        targetFile.parentFile?.mkdirs()
+                        targetFile.writeBytes(resourceBytes)
+
+                        // Rewrite src in HTML to file:// path
+                        img.attr("src", "file://${targetFile.absolutePath}")
+                    }
+                }
+            }
+
+            // --- Handle CSS files ---
+            doc.select("link[rel=stylesheet]").forEach { link ->
+                val href = link.attr("href")
+                if (href.isNotEmpty()) {
+                    val resourceZipPath = File(chapterHref).parent + "/" + href
+                    val resourceEntry = zipFile.getEntry(resourceZipPath)
+                    if (resourceEntry != null) {
+                        val resourceBytes = zipFile.getInputStream(resourceEntry).readBytes()
+                        val targetFile = File(cacheDir, resourceZipPath)
+                        targetFile.parentFile?.mkdirs()
+                        targetFile.writeBytes(resourceBytes)
+
+                        // Rewrite href in HTML
+                        link.attr("href", "file://${targetFile.absolutePath}")
+                    }
+                }
+            }
+
+            // --- Handle scripts (optional) ---
+            doc.select("script[src]").forEach { script ->
+                val src = script.attr("src")
+                if (src.isNotEmpty()) {
+                    val resourceZipPath = File(chapterHref).parent + "/" + src
+                    val resourceEntry = zipFile.getEntry(resourceZipPath)
+                    if (resourceEntry != null) {
+                        val resourceBytes = zipFile.getInputStream(resourceEntry).readBytes()
+                        val targetFile = File(cacheDir, resourceZipPath)
+                        targetFile.parentFile?.mkdirs()
+                        targetFile.writeBytes(resourceBytes)
+
+                        // Rewrite src
+                        script.attr("src", "file://${targetFile.absolutePath}")
+                    }
+                }
+            }
+
+            // --- Write rewritten chapter to cache ---
+            val cachedChapterFile = File(cacheDir, chapterHref)
+            cachedChapterFile.parentFile?.mkdirs()
+            cachedChapterFile.writeText(doc.outerHtml())
+
+            zipFile.close()
+
+            promise.resolve(cachedChapterFile.absolutePath)
+
+        } catch (e: Exception) {
+            promise.reject("E_PREPARE_CHAPTER_FAILED", "Failed to prepare chapter: ${e.message}", e)
+        }
+    }
+
   }
 }

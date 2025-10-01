@@ -1,6 +1,4 @@
 import FileUtilModule from './src/FileUtilModule';
-import { SaveFormat, ImageManipulator } from 'expo-image-manipulator';
-import * as FileSystem from 'expo-file-system';
 import { PermissionsAndroid, Platform } from 'react-native';
 import { OPFData } from '~/epub-core/types';
 
@@ -65,37 +63,14 @@ export async function extractCoverImage(bookPath: string, imagePath: string): Pr
       return '';
     });
 }
-export async function saveCoverImage(base64String: string, title: string): Promise<string> {
-  const filename = title.replace(/\s+/g, '_') + '.jpg'; // Sanitize filename
-  const path = `${FileSystem.documentDirectory}${filename}`;
 
-  const base64Data = base64String.replace(/^data:image\/\w+;base64,/, '');
-
-  try {
-    // Write Base64 string to file
-    await FileSystem.writeAsStringAsync(path, base64Data, {
-      encoding: FileSystem.EncodingType.Base64,
+export async function prepareChapter(bookPath: string, chapterPath: string): Promise<string> {
+  return FileUtilModule.prepareChapter(bookPath, chapterPath)
+    .then((result) => {
+      return result;
+    })
+    .catch((error) => {
+      console.error('Error preparing chapter:', error);
+      return '';
     });
-
-    const context = ImageManipulator.manipulate(path);
-
-    // Resize and compress image
-    const resized = await context.renderAsync();
-    const image = await resized.saveAsync({
-      compress: 0.1,
-      base64: true,
-      format: SaveFormat.JPEG, // Compress image
-    });
-    if (image.base64)
-      await FileSystem.writeAsStringAsync(path, image.base64, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
-
-    console.log('Cover image saved:', path);
-
-    return path; // Return file URI for loading in <Image />
-  } catch (error) {
-    console.error('Error processing cover image:', error);
-    return '';
-  }
 }

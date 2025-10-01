@@ -14,6 +14,7 @@ import Animated, { Easing, FadeInUp, LinearTransition } from 'react-native-reani
 import { Pressable, View } from 'react-native';
 import { useColorScheme } from '~/lib/useColorScheme';
 import { Book, useBookStore } from '~/store/bookStore';
+import { exploreCache } from '~/utils/exploreCache';
 
 export default function Library() {
   const [books, setBooks] = useState<string[]>([]);
@@ -250,6 +251,12 @@ export default function Library() {
         title="test legacy (timed)"
         onPress={() => {
           testLegacy();
+        }}
+      />
+      <Button
+        title="Explore cache"
+        onPress={() => {
+          exploreCache();
         }}
       />
     </SafeAreaView>

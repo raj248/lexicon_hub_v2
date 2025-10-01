@@ -1,8 +1,6 @@
 import { useBookStore } from '~/store/bookStore';
 import {
-  readFileFromZip,
   RequestStoragePermission,
-  saveCoverImage,
   ScanFiles,
   parseOPFFromBook,
   extractCoverImage,
