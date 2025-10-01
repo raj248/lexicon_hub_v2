@@ -1,31 +1,47 @@
 import { useWindowDimensions, Modal, Button, View } from 'react-native';
 import React, { useState } from 'react';
-import RenderHtml, { useInternalRenderer, InternalRendererProps } from 'react-native-render-html';
-import * as FileSystem from 'expo-file-system';
+import RenderHtml, {
+  useInternalRenderer,
+  useRendererProps,
+  InternalRendererProps,
+  RenderersProps,
+} from 'react-native-render-html';
 
-type CustomImageRendererProps = {
-  source: { uri: string };
-  alt?: string;
-};
+// Step 1: Module augmentation to extend the types for your custom props
+declare module 'react-native-render-html' {
+  interface RenderersProps {
+    img?: {
+      customOnPress?: (uri: string) => void;
+    };
+  }
+}
 
+// Step 2: Your custom renderer
 export default function CustomImageRenderer(props: InternalRendererProps<any>) {
-  const { Renderer, rendererProps } = useInternalRenderer('img', props);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { Renderer, rendererProps: baseRendererProps } = useInternalRenderer('img', props);
 
-  const onPress = () => setIsModalOpen(true);
+  // Step 3: Merge passed custom props
+  const rendererProps = useRendererProps('img', props);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const onPress = () => {
+    if (rendererProps.customOnPress) {
+      rendererProps.customOnPress(baseRendererProps.source.uri);
+    } else {
+      setIsModalOpen(true);
+    }
+  };
   const onModalClose = () => setIsModalOpen(false);
 
-  // Convert the epub-relative path to cached local file path
-  let localUri = rendererProps.source.uri;
-  // if (!localUri?.startsWith('http') && !localUri?.startsWith('file://')) {
-  //   localUri = `file://${FileSystem.cacheDirectory}${localUri}`;
-  // }
-  localUri = 'https://placehold.co/600x400/EEE/31343C.png';
-  const newSource = { ...rendererProps.source, uri: localUri };
+  // For demo: just override URI
+  const newSource = {
+    ...baseRendererProps.source,
+    uri: 'https://placehold.co/600x400/EEE/31343C.png',
+  };
 
   return (
     <View style={{ alignItems: 'center', marginVertical: 8 }}>
-      <Renderer {...rendererProps} source={newSource} onPress={onPress} />
+      <Renderer {...baseRendererProps} source={newSource} onPress={onPress} />
       <Modal visible={isModalOpen} onRequestClose={onModalClose} animationType="slide">
         <View
           style={{
@@ -34,7 +50,7 @@ export default function CustomImageRenderer(props: InternalRendererProps<any>) {
             alignItems: 'center',
             backgroundColor: '#000',
           }}>
-          <Renderer {...rendererProps} source={newSource} />
+          <Renderer {...baseRendererProps} source={newSource} />
           <Button title="Close" onPress={onModalClose} />
         </View>
       </Modal>

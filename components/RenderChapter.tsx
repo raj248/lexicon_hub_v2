@@ -66,6 +66,13 @@ export default function ChapterView({ filePath }: ChapterViewProps) {
           }}
           defaultTextProps={{ selectable: true }}
           renderers={{ img: CustomImageRenderer }}
+          renderersProps={{
+            img: {
+              customOnPress: (uri: string) => {
+                console.log('Image tapped!', uri);
+              },
+            },
+          }}
         />
       </ScrollView>
     </SafeAreaView>
