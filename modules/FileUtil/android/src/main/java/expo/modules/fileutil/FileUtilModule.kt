@@ -138,165 +138,195 @@ class FileUtilModule : Module() {
     }
 
     AsyncFunction("parseOPFFromBook") { epubPath: String, promise: Promise ->
-        try {
-            val zipFile = ZipFile(epubPath)
+      try {
+        val zipFile = ZipFile(epubPath)
 
-            // --- Step 1: Find OPF ---
-            val containerEntry = zipFile.getEntry("META-INF/container.xml")
-                ?: run { zipFile.close(); promise.reject("E_NO_CONTAINER", "META-INF/container.xml not found", null); return@AsyncFunction }
+        // --- Step 1: Find OPF ---
+        val containerEntry = zipFile.getEntry("META-INF/container.xml")
+          ?: run { zipFile.close(); promise.reject("E_NO_CONTAINER", "META-INF/container.xml not found", null); return@AsyncFunction }
 
-            val containerXml = zipFile.getInputStream(containerEntry).bufferedReader().use { it.readText() }
-            val opfPathRegex = """full-path="([^"]+)""".toRegex()
-            val opfPath = opfPathRegex.find(containerXml)?.groups?.get(1)?.value
+        val containerXml = zipFile.getInputStream(containerEntry).bufferedReader().use { it.readText() }
+        val opfPathRegex = """full-path="([^"]+)""".toRegex()
+        val opfPath = opfPathRegex.find(containerXml)?.groups?.get(1)?.value
 
-            if (opfPath == null) { zipFile.close(); promise.reject("E_NO_OPF", "OPF path not found", null); return@AsyncFunction }
+        if (opfPath == null) { zipFile.close(); promise.reject("E_NO_OPF", "OPF path not found", null); return@AsyncFunction }
 
-            val opfEntry = zipFile.getEntry(opfPath)
-                ?: run { zipFile.close(); promise.reject("E_OPF_NOT_FOUND", "OPF file not found", null); return@AsyncFunction }
+        val opfEntry = zipFile.getEntry(opfPath)
+          ?: run { zipFile.close(); promise.reject("E_OPF_NOT_FOUND", "OPF file not found", null); return@AsyncFunction }
 
-            val opfXml = zipFile.getInputStream(opfEntry).bufferedReader().use { it.readText() }
+        val opfXml = zipFile.getInputStream(opfEntry).bufferedReader().use { it.readText() }
 
-            val lastSlash = opfPath.lastIndexOf('/')
-            val opfDir = if (lastSlash >= 0) opfPath.substring(0, lastSlash) else ""
+        val lastSlash = opfPath.lastIndexOf('/')
+        val opfDir = if (lastSlash >= 0) opfPath.substring(0, lastSlash) else ""
 
-            // --- Step 2: Parse OPF ---
-            val factory = XmlPullParserFactory.newInstance()
-            val parser = factory.newPullParser()
-            parser.setInput(opfXml.reader())
+        // --- Step 2: Parse OPF ---
+        val factory = XmlPullParserFactory.newInstance()
+        val parser = factory.newPullParser()
+        parser.setInput(opfXml.reader())
 
-            var eventType = parser.eventType
-            var currentTag: String? = null
+        var eventType = parser.eventType
+        var currentTag: String? = null
 
-            var metadataTitle: String? = null
-            var metadataAuthor: String? = null
-            var metadataLanguage: String? = null
-            var metadataDate: String? = null
-            var metadataIdentifier: String? = null
-            var metadataContributor: String? = null
-            var coverHref: String? = null
+        var metadataTitle: String? = null
+        var metadataAuthor: String? = null
+        var metadataLanguage: String? = null
+        var metadataDate: String? = null
+        var metadataIdentifier: String? = null
+        var metadataContributor: String? = null
+        var coverHref: String? = null
+        var uniqueIdentifierId: String? = null
 
-            data class ManifestItem(
-                val id: String?,
-                val href: String?,
-                val properties: String?,
-                val absoluteHref: String
-            )
+        data class ManifestItem(
+          val id: String?,
+          val href: String?,
+          val properties: String?,
+          val absoluteHref: String
+        )
 
-            val manifestList = mutableListOf<ManifestItem>()
-            val metaList = mutableListOf<Pair<String, String>>() // name -> content
-            val manifestMap = mutableMapOf<String, ManifestItem>()
-            val spineList = mutableListOf<Map<String, String>>()
-            val textBuffer = StringBuilder()
-            var inSpine = false
+        val manifestList = mutableListOf<ManifestItem>()
+        val metaList = mutableListOf<Pair<String, String>>() // name -> content
+        val manifestMap = mutableMapOf<String, ManifestItem>()
+        val spineList = mutableListOf<Map<String, String>>()
+        val textBuffer = StringBuilder()
+        var inSpine = false
 
-            while (eventType != XmlPullParser.END_DOCUMENT) {
-                when (eventType) {
-                    XmlPullParser.START_TAG -> {
-                        currentTag = parser.name
-                        textBuffer.clear()
-                        when (currentTag) {
-                            "item" -> {
-                                val id = parser.getAttributeValue(null, "id")
-                                val href = parser.getAttributeValue(null, "href")
-                                val properties = parser.getAttributeValue(null, "properties")
-                                if (href != null) {
-                                    val absoluteHref = if (opfDir.isNotEmpty()) "$opfDir/$href" else href
-                                    val item = ManifestItem(id, href, properties, absoluteHref.replace(Regex("/+"), "/"))
-                                    manifestList.add(item)
-                                    if (id != null) manifestMap[id] = item
-                                }
-                            }
-                            "itemref" -> {
-                                if (inSpine) {
-                                    val idref = parser.getAttributeValue(null, "idref")
-                                    if (idref != null) {
-                                        spineList.add(
-                                            mapOf(
-                                                "id" to idref,
-                                                "href" to (manifestMap[idref]?.absoluteHref ?: idref)
-                                            )
-                                        )
-                                    }
-                                }
-                            }
-                            "spine" -> { inSpine = true }
-                            "meta" -> {
-                                val nameAttr = parser.getAttributeValue(null, "name")
-                                val contentAttr = parser.getAttributeValue(null, "content")
-                                if (nameAttr != null && contentAttr != null) {
-                                    metaList.add(nameAttr to contentAttr)
-                                }
-                            }
-                        }
-                    }
-                    XmlPullParser.TEXT -> textBuffer.append(parser.text)
-                    XmlPullParser.END_TAG -> {
-                        when (parser.name) {
-                            "dc:title" -> metadataTitle = textBuffer.toString().trim()
-                            "dc:creator" -> metadataAuthor = textBuffer.toString().trim()
-                            "dc:language" -> metadataLanguage = textBuffer.toString().trim()
-                            "dc:date" -> metadataDate = textBuffer.toString().trim()
-                            "dc:identifier" -> metadataIdentifier = textBuffer.toString().trim()
-                            "dc:contributor" -> metadataContributor = textBuffer.toString().trim()
-                        }
-                        textBuffer.clear()
-                        currentTag = null
-                    }
+        // Store all identifiers by id
+        val identifierMap = mutableMapOf<String, String>()
+        var currentIdentifierId: String? = null
+
+        while (eventType != XmlPullParser.END_DOCUMENT) {
+          when (eventType) {
+            XmlPullParser.START_TAG -> {
+              currentTag = parser.name
+              textBuffer.clear()
+              when (currentTag) {
+                "package" -> {
+                  uniqueIdentifierId = parser.getAttributeValue(null, "unique-identifier")
+                  // Log.d("FileUtil", "uniqueIdentifierId: $uniqueIdentifierId")
                 }
-                eventType = parser.next()
-            }
-
-            // --- Step 3: Resolve cover image with JS-style fallbacks ---
-            fun isValidImage(href: String?) = href?.matches(Regex(""".*\.(jpg|jpeg|png|gif|webp)$""", RegexOption.IGNORE_CASE)) == true
-
-            // 1️⃣ meta[name=cover]
-            val coverMeta = metaList.find { it.first == "cover" }
-            coverHref = coverMeta?.let { (_, content) ->
-                manifestMap[content]?.absoluteHref ?: if (isValidImage(content)) "$opfDir/$content" else null
-            }
-
-            // 2️⃣ fallback candidates
-            if (!isValidImage(coverHref)) {
-                val candidates = listOfNotNull(
-                    manifestMap["cover"]?.absoluteHref,
-                    manifestMap["cover-image"]?.absoluteHref,
-                    manifestList.find { it.properties == "cover-image" }?.absoluteHref,
-                    manifestList.find { it.id?.let { isValidImage(it) } == true }?.absoluteHref
-                )
-                if (candidates.isNotEmpty()) coverHref = candidates[0]
-            }
-
-            // 2️⃣b additional fallback: look for id = "Cover.[imgextension]"
-            if (!isValidImage(coverHref)) {
-                val coverIdItem = manifestList.find { 
-                    it.id?.matches(Regex("""Cover\.(jpg|jpeg|png|gif|webp)""", RegexOption.IGNORE_CASE)) == true 
+                "item" -> {
+                  val id = parser.getAttributeValue(null, "id")
+                  val href = parser.getAttributeValue(null, "href")
+                  val properties = parser.getAttributeValue(null, "properties")
+                  if (href != null) {
+                    val absoluteHref = if (opfDir.isNotEmpty()) "$opfDir/$href" else href
+                    val item = ManifestItem(id, href, properties, absoluteHref.replace(Regex("/+"), "/"))
+                    manifestList.add(item)
+                    if (id != null) manifestMap[id] = item
+                  }
                 }
-                if (coverIdItem != null) coverHref = coverIdItem.absoluteHref
+                "itemref" -> {
+                  if (inSpine) {
+                    val idref = parser.getAttributeValue(null, "idref")
+                    if (idref != null) {
+                      spineList.add(
+                        mapOf(
+                          "id" to idref,
+                          "href" to (manifestMap[idref]?.absoluteHref ?: idref)
+                        )
+                      )
+                    }
+                  }
+                }
+                "spine" -> { inSpine = true }
+                "meta" -> {
+                  val nameAttr = parser.getAttributeValue(null, "name")
+                  val contentAttr = parser.getAttributeValue(null, "content")
+                  if (nameAttr != null && contentAttr != null) {
+                    metaList.add(nameAttr to contentAttr)
+                  }
+                }
+                "dc:identifier" -> {
+                  currentIdentifierId = parser.getAttributeValue(null, "id")
+                }
+              }
             }
-
-            // 3️⃣ last fallback: first image in manifest
-            if (!isValidImage(coverHref)) {
-                coverHref = manifestList.find { isValidImage(it.href) }?.absoluteHref
+            XmlPullParser.TEXT -> textBuffer.append(parser.text)
+            XmlPullParser.END_TAG -> {
+              when (parser.name) {
+                "dc:title" -> metadataTitle = textBuffer.toString().trim()
+                "dc:creator" -> metadataAuthor = textBuffer.toString().trim()
+                "dc:language" -> metadataLanguage = textBuffer.toString().trim()
+                "dc:date" -> metadataDate = textBuffer.toString().trim()
+                "dc:identifier" -> {
+                    val value = textBuffer.toString().trim()
+                    // Log.d("FileUtil", "identifier value: $value and id: $currentIdentifierId")
+                    if (currentIdentifierId != null && value.isNotEmpty()) {
+                        identifierMap[currentIdentifierId!!] = value
+                    } else if (value.isNotEmpty()) {
+                        // fallback for identifiers without id
+                        identifierMap["__no_id__${identifierMap.size}"] = value
+                    }
+                    currentIdentifierId = null // reset tracking id
+                }
+                "dc:contributor" -> metadataContributor = textBuffer.toString().trim()
+              }
+              textBuffer.clear()
+              currentTag = null
             }
-
-            val opfData = mapOf(
-                "metadata" to mapOf(
-                    "title" to (metadataTitle ?: ""),
-                    "author" to (metadataAuthor ?: ""),
-                    "language" to (metadataLanguage ?: ""),
-                    "date" to (metadataDate ?: ""),
-                    "identifier" to (metadataIdentifier ?: ""),
-                    "contributor" to (metadataContributor ?: ""),
-                    "coverImage" to (coverHref ?: "")
-                ),
-                "spine" to spineList
-            )
-
-            promise.resolve(opfData)
-            zipFile.close()
-        } catch (e: Exception) {
-            promise.reject("E_OPF_PARSE_FAILED", "Failed to parse OPF: ${e.message}", e)
+          }
+          eventType = parser.next()
         }
+
+        // Pick identifier using unique-identifier attribute if available
+        metadataIdentifier = if (uniqueIdentifierId != null) {
+            identifierMap[uniqueIdentifierId] ?: identifierMap.values.firstOrNull()
+        } else {
+            identifierMap.values.firstOrNull()
+        }
+
+        // Log.d("FileUtil", "uniqueIdentifierId value: $metadataIdentifier")
+        // --- Step 3: Resolve cover image with JS-style fallbacks ---
+        fun isValidImage(href: String?) = href?.matches(Regex(""".*\.(jpg|jpeg|png|gif|webp)$""", RegexOption.IGNORE_CASE)) == true
+
+        // 1️⃣ meta[name=cover]
+        val coverMeta = metaList.find { it.first == "cover" }
+        coverHref = coverMeta?.let { (_, content) ->
+          manifestMap[content]?.absoluteHref ?: if (isValidImage(content)) "$opfDir/$content" else null
+        }
+
+        // 2️⃣ fallback candidates
+        if (!isValidImage(coverHref)) {
+          val candidates = listOfNotNull(
+            manifestMap["cover"]?.absoluteHref,
+            manifestMap["cover-image"]?.absoluteHref,
+            manifestList.find { it.properties == "cover-image" }?.absoluteHref,
+            manifestList.find { it.id?.let { isValidImage(it) } == true }?.absoluteHref
+          )
+          if (candidates.isNotEmpty()) coverHref = candidates[0]
+        }
+
+        // 2️⃣b additional fallback: id = "Cover.[ext]"
+        if (!isValidImage(coverHref)) {
+          val coverIdItem = manifestList.find {
+            it.id?.matches(Regex("""Cover\.(jpg|jpeg|png|gif|webp)""", RegexOption.IGNORE_CASE)) == true
+          }
+          if (coverIdItem != null) coverHref = coverIdItem.absoluteHref
+        }
+
+        // 3️⃣ last fallback: first image in manifest
+        if (!isValidImage(coverHref)) {
+          coverHref = manifestList.find { isValidImage(it.href) }?.absoluteHref
+        }
+
+        val opfData = mapOf(
+          "metadata" to mapOf(
+            "title" to (metadataTitle ?: ""),
+            "author" to (metadataAuthor ?: ""),
+            "language" to (metadataLanguage ?: ""),
+            "date" to (metadataDate ?: ""),
+            "identifier" to (metadataIdentifier ?: ""),
+            "contributor" to (metadataContributor ?: ""),
+            "coverImage" to (coverHref ?: "")
+          ),
+          "spine" to spineList
+        )
+
+        promise.resolve(opfData)
+        zipFile.close()
+      } catch (e: Exception) {
+        promise.reject("E_OPF_PARSE_FAILED", "Failed to parse OPF: ${e.message}", e)
+      }
     }
     
     AsyncFunction("optimizeCoverImage") { epubPath: String, coverPathInZip: String, promise: Promise ->

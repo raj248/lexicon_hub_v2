@@ -59,7 +59,7 @@ export const useBookStore = create<BookStore & { hydrated: boolean }>()(
 
       addBooks: (books: Book[]) =>
         set((state) => {
-          console.log('🚀 addBooks CALLED with:', books.length, 'books');
+          // console.log('🚀 addBooks CALLED with:', books.length, 'books');
 
           const newBooks = { ...state.books };
           let addedCount = 0;
@@ -70,11 +70,13 @@ export const useBookStore = create<BookStore & { hydrated: boolean }>()(
                 category: book.category ?? ['Book'],
               };
               addedCount++;
+            } else {
+              console.log("Book with ID '" + book.id + '' + 'already exists.');
             }
           });
 
-          console.log(`✅ ${addedCount} new books added`);
-          console.log('📚 Total books after update:', Object.keys(newBooks).length);
+          // console.log(`✅ ${addedCount} new books added`);
+          // console.log('📚 Total books after update:', Object.keys(newBooks).length);
 
           return { books: newBooks };
         }),

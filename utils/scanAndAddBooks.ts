@@ -27,7 +27,7 @@ export default async function scanAndAddBooks() {
     // Process all books concurrently but safely
     const processBook = async (bookPath: string) => {
       if (existingPaths.has(bookPath)) return null;
-
+      console.log('Processing book:', bookPath);
       try {
         const file = await parseOPFFromBook(bookPath);
 
@@ -44,7 +44,6 @@ export default async function scanAndAddBooks() {
           id: metadata.identifier,
           coverImage: metadata.coverImage, // initially may be undefined
         };
-
         // Immediately add book to store for UI feedback
         useBookStore.getState().addBooks([newBook]);
 
@@ -52,12 +51,8 @@ export default async function scanAndAddBooks() {
         if (newBook.coverImage) {
           const cover = await extractCoverImage(bookPath, newBook.coverImage);
           if (cover) newBook.coverImage = cover;
-          console.log('Cover Image: ', cover);
-          // const coverBase64 = await readFileFromZip(bookPath, newBook.coverImage);
-          // if (coverBase64) {
-          // const savedCover = await saveCoverImage(coverBase64, metadata.title);
-          // Update store with the cover image without blocking UI
-          // useBookStore.getState().updateBook(newBook.id, { coverImage: savedCover });
+          // console.log('Cover Image: ', cover);
+          useBookStore.getState().updateBook(newBook.id, { coverImage: cover });
           // }
         }
 
@@ -71,13 +66,16 @@ export default async function scanAndAddBooks() {
     // Limit concurrency to prevent blocking too many books at once
     const concurrency = 5;
     let index = 0;
+
+    const start = performance.now();
     while (index < bookPaths.length) {
       const batch = bookPaths.slice(index, index + concurrency);
       await Promise.all(batch.map((p) => processBook(p)));
       index += concurrency;
     }
+    const end = performance.now();
 
-    console.log('✅ Finished scanning and adding books');
+    console.log('✅ Finished scanning and adding books in ' + (end - start) + 'ms');
   } catch (error) {
     console.error('Error in scanAndAddBooks:', error);
   }

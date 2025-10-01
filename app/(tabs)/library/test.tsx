@@ -166,12 +166,14 @@ export default function Library() {
     //   console.log('result', result.metadata.title, result.metadata.coverImage);
     // });
 
-    books.forEach((book) => {
+    books.map((book) => {
       FileUtil.parseOPFFromBook(book).then((result) => {
         console.log(
           'result',
           // result.metadata.title,
-          result?.metadata.coverImage ?? result?.metadata.title + ' (no cover)'
+          // result?.metadata.coverImage ?? result?.metadata.title + ' (no cover)'
+          result?.metadata.title,
+          result?.metadata.identifier
         );
         // console.log('result', result?.spine);
       });
