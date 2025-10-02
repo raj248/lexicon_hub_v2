@@ -15,6 +15,7 @@ export default function AppStatusBar() {
           ? '#0b0220' // zaffre-100 (deep indigo, dark theme bg)
           : '#b4c1f8' // rose (primary brand color)
       }
+      hidden={true} // [SETTINGS:FULLSCREEN]
     />
   );
 }

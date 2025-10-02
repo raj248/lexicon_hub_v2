@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, useNavigation } from 'expo-router';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '~/components/Button';
@@ -15,8 +15,19 @@ import { Pressable, View } from 'react-native';
 import { useColorScheme } from '~/lib/useColorScheme';
 import { Book, useBookStore } from '~/store/bookStore';
 import { exploreCache } from '~/utils/exploreCache';
+import { useTabBar } from '~/context/TabBarContext';
 
 export default function Library() {
+  const { hide, show } = useTabBar();
+  const navigation = useNavigation();
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      show(); // show tab bar on tab switch
+    });
+
+    return unsubscribe;
+  }, [navigation, show]);
+
   const [books, setBooks] = useState<string[]>([]);
   const { colors } = useColorScheme();
 

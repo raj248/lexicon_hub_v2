@@ -1,18 +1,26 @@
 'use client';
 
-import { router } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useNavigation } from 'expo-router';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Pressable, RefreshControl, useWindowDimensions } from 'react-native';
 import { Image } from 'expo-image';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { FlashList } from '@shopify/flash-list';
 import { Book, useBookStore } from '~/store/bookStore';
 import { Text } from '~/components/nativewindui/Text';
 import { getRandomBlurhash } from '~/utils/blurhash';
-import Animated, { FadeInUp, LinearTransition } from 'react-native-reanimated';
+import Animated, {
+  FadeInUp,
+  LinearTransition,
+  runOnJS,
+  useAnimatedScrollHandler,
+  useSharedValue,
+} from 'react-native-reanimated';
 import { InteractionManager } from 'react-native';
 import { useColorScheme } from '~/lib/useColorScheme';
 import { darkTheme, lightTheme } from '~/theme/theme';
+import { useTabBar } from '~/context/TabBarContext';
+import { FlashList as RNFlashList } from '@shopify/flash-list';
+
+export const AnimatedFlashList = Animated.createAnimatedComponent(RNFlashList<any>);
 
 const CoverImage = ({ uri }: { uri?: string }) => {
   const randomBlurhash = useMemo(() => (!uri ? getRandomBlurhash() : null), [uri]);
@@ -32,14 +40,20 @@ const CoverImage = ({ uri }: { uri?: string }) => {
 };
 
 export default function Library() {
+  const { hide, show } = useTabBar();
+  const navigation = useNavigation();
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      show(); // show tab bar on tab switch
+    });
+
+    return unsubscribe;
+  }, [navigation, show]);
+
   const books = useBookStore((state) => Object.values(state.books));
   const [refreshing, setRefreshing] = useState(false);
   const { width } = useWindowDimensions();
   const { isDarkColorScheme } = useColorScheme();
-  const colors = useMemo(
-    () => (isDarkColorScheme ? darkTheme.colors : lightTheme.colors),
-    [isDarkColorScheme]
-  );
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -94,23 +108,48 @@ export default function Library() {
     [cardWidth, isDarkColorScheme]
   );
 
+  const lastY = useSharedValue(0);
+
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      // velocity not directly available on FlashList, so we check deltaY
+      const diff = event.contentOffset.y - lastY.value;
+      if (diff < -5) {
+        // scrolling up → show
+        runOnJS(show)();
+        console.log('Showing');
+      } else if (diff > 5) {
+        // scrolling down → hide
+        runOnJS(hide)();
+        console.log('Hiding');
+      }
+      lastY.value = event.contentOffset.y;
+    },
+  });
   return (
-    <SafeAreaView
-      style={{
-        flex: 1,
-        backgroundColor: isDarkColorScheme
-          ? darkTheme.colors.background
-          : lightTheme.colors.background,
-      }}
-      edges={['top', 'left', 'right', 'bottom']}>
-      <FlashList
-        data={books}
-        renderItem={renderItem}
-        estimatedItemSize={cardWidth + 100}
-        numColumns={numColumns}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        contentContainerStyle={{ padding: CARD_MARGIN / 2 }}
-      />
-    </SafeAreaView>
+    // <SafeAreaView
+    <>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: isDarkColorScheme
+            ? darkTheme.colors.background
+            : lightTheme.colors.background,
+        }}
+        // edges={['left', 'right', 'bottom']}
+      >
+        <AnimatedFlashList
+          data={books}
+          renderItem={renderItem}
+          estimatedItemSize={cardWidth + 100}
+          numColumns={numColumns}
+          onScroll={scrollHandler}
+          scrollEventThrottle={5}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          contentContainerStyle={{ padding: CARD_MARGIN / 2 }}
+        />
+      </View>
+    </>
+    // </SafeAreaView>
   );
 }
