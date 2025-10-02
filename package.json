@@ -58,6 +58,7 @@
     "react-native-render-html": "^6.3.4",
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "~4.11.1",
+    "react-native-shared-element": "^0.9.0-rc0",
     "react-native-uitextview": "2.0.0-rc.10",
     "react-native-web": "^0.20.0",
     "tailwind-merge": "^2.2.1",

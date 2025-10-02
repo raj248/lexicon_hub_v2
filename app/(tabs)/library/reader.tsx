@@ -28,7 +28,7 @@ export default function Reader() {
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
       <Text>Reader Screen</Text>
       {book && <Text>Book: {book.title}</Text>}
-      <ChapterView filePath={chapter ?? ''} />
+      {chapter && <ChapterView filePath={chapter} />}
     </View>
   );
 }

@@ -46,7 +46,7 @@ export default function CustomImageRenderer(props: InternalRendererProps<any>) {
 
   return (
     <View style={{ alignItems: 'center', marginVertical: 8 }}>
-      <Renderer {...baseRendererProps} source={newSource} onPress={onPress} />
+      <Renderer {...baseRendererProps} onPress={onPress} />
       <Modal visible={isModalOpen} onRequestClose={onModalClose} animationType="slide">
         <View
           style={{
@@ -55,7 +55,7 @@ export default function CustomImageRenderer(props: InternalRendererProps<any>) {
             alignItems: 'center',
             backgroundColor: '#000',
           }}>
-          <Renderer {...baseRendererProps} source={newSource} />
+          <Renderer {...baseRendererProps} />
           <Button title="Close" onPress={onModalClose} />
         </View>
       </Modal>
