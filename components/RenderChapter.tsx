@@ -60,7 +60,7 @@ export default function ChapterView({ filePath }: ChapterViewProps) {
           contentWidth={contentWidth}
           source={{ html }}
           tagsStyles={{
-            img: { maxWidth: '100%', height: 'auto' },
+            img: { maxWidth: '100vw', height: 'auto' },
             body: { backgroundColor: 'transparent' },
             h1: { fontSize: 22, fontWeight: 'bold' },
           }}
@@ -68,6 +68,7 @@ export default function ChapterView({ filePath }: ChapterViewProps) {
           renderers={{ img: CustomImageRenderer }}
           renderersProps={{
             img: {
+              // @ts-ignore it works, so ignore it
               customOnPress: (uri: string) => {
                 console.log('Image tapped!', uri);
               },

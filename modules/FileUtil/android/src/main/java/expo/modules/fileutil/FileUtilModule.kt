@@ -412,19 +412,26 @@ class FileUtilModule : Module() {
             // --- Handle images ---
             doc.select("img").forEach { img ->
                 val src = img.attr("src")
+                Log.d("FileUtil", "src: $src")
                 if (src.isNotEmpty()) {
-                    // Resolve zip path relative to chapter
-                    val resourceZipPath = File(chapterHref).parent + "/" + src
-                    val resourceEntry = zipFile.getEntry(resourceZipPath)
+                    // Parent folder of current chapter
+                    val chapterDir = File(chapterHref).parentFile
+
+                    // Resolve the relative src against the chapter directory
+                    val resourcePath = File(chapterDir, src).normalize().path
+                    Log.d("FileUtil", "Resolved resourcePath: $resourcePath")
+
+                    // Check in zip
+                    val resourceEntry = zipFile.getEntry(resourcePath)
                     if (resourceEntry != null) {
                         val resourceBytes = zipFile.getInputStream(resourceEntry).readBytes()
 
-                        // Prepare target cache file
-                        val targetFile = File(cacheDir, resourceZipPath)
+                        // Cache target file
+                        val targetFile = File(cacheDir, resourcePath)
                         targetFile.parentFile?.mkdirs()
                         targetFile.writeBytes(resourceBytes)
 
-                        // Rewrite src in HTML to file:// path
+                        // Rewrite HTML img src to cached file:// path
                         img.attr("src", "file://${targetFile.absolutePath}")
                     }
                 }

@@ -15,7 +15,7 @@ export default function Reader() {
       console.log('Loading book: ', tempBook?.path);
       setBook(tempBook);
       parseOPFFromBook(tempBook.path ?? '').then((result) => {
-        prepareChapter(tempBook.path ?? '', result?.spine[0].href ?? '').then((html) => {
+        prepareChapter(tempBook.path ?? '', result?.spine[1].href ?? '').then((html) => {
           console.log('html', html);
           setChapter(html);
         });
