@@ -175,6 +175,7 @@ class FileUtilModule : Module() {
         var metadataContributor: String? = null
         var coverHref: String? = null
         var uniqueIdentifierId: String? = null
+        var tocHref: String? = null
 
         data class ManifestItem(
           val id: String?,
@@ -212,6 +213,7 @@ class FileUtilModule : Module() {
                     val absoluteHref = if (opfDir.isNotEmpty()) "$opfDir/$href" else href
                     val item = ManifestItem(id, href, properties, absoluteHref.replace(Regex("/+"), "/"))
                     manifestList.add(item)
+                    Log.d("FileUtil", "item: $item")
                     if (id != null) manifestMap[id] = item
                   }
                 }
@@ -275,6 +277,11 @@ class FileUtilModule : Module() {
             identifierMap.values.firstOrNull()
         }
 
+        // Step 2b: Find TOC href
+        tocHref = manifestList.find { it.properties?.contains("nav") == true }?.absoluteHref
+            ?: manifestList.find { it.href?.endsWith(".ncx", ignoreCase = true) == true }?.absoluteHref
+
+
         // Log.d("FileUtil", "uniqueIdentifierId value: $metadataIdentifier")
         // --- Step 3: Resolve cover image with JS-style fallbacks ---
         fun isValidImage(href: String?) = href?.matches(Regex(""".*\.(jpg|jpeg|png|gif|webp)$""", RegexOption.IGNORE_CASE)) == true
@@ -317,7 +324,8 @@ class FileUtilModule : Module() {
             "date" to (metadataDate ?: ""),
             "identifier" to (metadataIdentifier ?: ""),
             "contributor" to (metadataContributor ?: ""),
-            "coverImage" to (coverHref ?: "")
+            "coverImage" to (coverHref ?: ""),
+            "toc" to (tocHref ?: "")
           ),
           "spine" to spineList
         )
@@ -484,5 +492,158 @@ class FileUtilModule : Module() {
         }
     }
 
+    AsyncFunction("parseTOC") { epubPath: String, tocHref: String, promise: Promise ->
+        val zipFile = ZipFile(epubPath)
+
+      // --- Step 1: Find OPF ---
+        val containerEntry = zipFile.getEntry("META-INF/container.xml")
+          ?: run { zipFile.close(); promise.reject("E_NO_CONTAINER", "META-INF/container.xml not found", null); return@AsyncFunction }
+
+        val containerXml = zipFile.getInputStream(containerEntry).bufferedReader().use { it.readText() }
+        val opfPathRegex = """full-path="([^"]+)""".toRegex()
+        val opfPath = opfPathRegex.find(containerXml)?.groups?.get(1)?.value
+        
+        if (opfPath == null) { zipFile.close(); promise.reject("E_NO_OPF", "OPF path not found", null); return@AsyncFunction }
+
+        val lastSlash = opfPath.lastIndexOf('/')
+        val opfDir = if (lastSlash >= 0) opfPath.substring(0, lastSlash) else ""
+
+        try {
+            val chapters = if (tocHref.lowercase().endsWith(".ncx")) {
+                parseNCX(epubPath, tocHref)
+            } else {
+                parseNavXHTML(epubPath, tocHref, opfDir)
+            }
+            promise.resolve(chapters) // chapters is List<Map<String,String>>
+        } catch (e: Exception) {
+            promise.reject("E_TOC_PARSE_FAILED", "Failed to parse TOC: ${e.message}", e)
+        }
+    }
+
+
+
+  }
+
+  // --- Top-level function to parse TOC ---
+  fun parseTOCFromEPUB(epubPath: String, tocHref: String, opfDir: String): List<Map<String, String>> {
+      return if (tocHref.endsWith(".ncx", ignoreCase = true)) {
+          parseNCX(epubPath, tocHref)
+      } else {
+          parseNavXHTML(epubPath, tocHref, opfDir)
+      }
+  }
+
+  // --- NCX parser ---
+  fun parseNCX(epubPath: String, ncxHref: String): List<Map<String, String>> {
+      val zipFile = ZipFile(epubPath)
+      val ncxEntry = zipFile.getEntry(ncxHref) ?: run {
+          zipFile.close()
+          return emptyList()
+      }
+
+      val parserFactory = XmlPullParserFactory.newInstance()
+      val parser = parserFactory.newPullParser()
+      parser.setInput(zipFile.getInputStream(ncxEntry).reader())
+
+      val chapters = mutableListOf<Map<String, String>>()
+      var eventType = parser.eventType
+      var currentTag: String? = null
+      var navLabel: String? = null
+      var contentSrc: String? = null
+
+      while (eventType != XmlPullParser.END_DOCUMENT) {
+          when (eventType) {
+              XmlPullParser.START_TAG -> {
+                  currentTag = parser.name
+                  if (currentTag == "navPoint") {
+                      navLabel = null
+                      contentSrc = null
+                  }
+              }
+              XmlPullParser.TEXT -> {
+                  if (currentTag == "text") navLabel = parser.text.trim()
+                  if (currentTag == "content") contentSrc = parser.getAttributeValue(null, "src")?.trim()
+              }
+              XmlPullParser.END_TAG -> {
+                  if (parser.name == "navPoint") {
+                      if (!contentSrc.isNullOrEmpty() && !navLabel.isNullOrEmpty()) {
+                          chapters.add(
+                              mapOf(
+                                  "title" to navLabel,
+                                  "href" to contentSrc
+                              )
+                          )
+                      }
+                  }
+                  currentTag = null
+              }
+          }
+          eventType = parser.next()
+      }
+
+      zipFile.close()
+      return chapters
+  }
+
+  // ----------------- NAV XHTML parser -----------------
+  fun parseNavXHTML(epubPath: String, navHref: String, opfDir: String): List<Map<String, String>> {
+      val zipFile = ZipFile(epubPath)
+      val navEntry = zipFile.getEntry(navHref) ?: run {
+          zipFile.close()
+          return emptyList()
+      }
+
+      val parserFactory = XmlPullParserFactory.newInstance()
+      parserFactory.isNamespaceAware = true
+      val parser = parserFactory.newPullParser()
+      parser.setInput(zipFile.getInputStream(navEntry).reader())
+
+      val chapters = mutableListOf<Map<String, String>>()
+      var eventType = parser.eventType
+      var insideNav = false
+      var insideAnchor = false
+      var currentTitle: String? = null
+      var currentHref: String? = null
+
+      while (eventType != XmlPullParser.END_DOCUMENT) {
+          when (eventType) {
+              XmlPullParser.START_TAG -> {
+                  when (parser.name.lowercase()) {
+                      "nav" -> {
+                          val typeAttr = parser.getAttributeValue(null, "epub:type")
+                          if (typeAttr?.contains("toc") == true) insideNav = true
+                      }
+                      "a" -> if (insideNav) {
+                          currentHref = parser.getAttributeValue(null, "href")?.trim()
+                          insideAnchor = true
+                      }
+                  }
+              }
+              XmlPullParser.TEXT -> {
+                  if (insideAnchor) {
+                      currentTitle = parser.text.trim()
+                  }
+              }
+              XmlPullParser.END_TAG -> {
+                  when (parser.name.lowercase()) {
+                      "a" -> {
+                          if (insideAnchor && !currentHref.isNullOrEmpty() && !currentTitle.isNullOrEmpty()) {
+                              // Resolve relative path
+                              val absoluteHref = if (opfDir.isNotEmpty()) "$opfDir/$currentHref" else currentHref
+                              chapters.add(mapOf("title" to currentTitle, "href" to absoluteHref.replace(Regex("/+"), "/")))
+                          }
+                          insideAnchor = false
+                          currentTitle = null
+                          currentHref = null
+                      }
+                      "nav" -> insideNav = false
+                  }
+              }
+          }
+          eventType = parser.next()
+      }
+
+      zipFile.close()
+      return chapters
   }
 }

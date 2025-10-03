@@ -41,7 +41,6 @@ export async function checkFilePermission(): Promise<boolean> {
   }
   return true;
 }
-
 export async function parseOPFFromBook(bookPath: string): Promise<OPFData | null> {
   if (!bookPath) {
     console.warn('No book path provided');
@@ -56,7 +55,6 @@ export async function parseOPFFromBook(bookPath: string): Promise<OPFData | null
       return null;
     });
 }
-
 export async function extractCoverImage(bookPath: string, imagePath: string): Promise<string> {
   return await FileUtilModule.optimizeCoverImage(bookPath, imagePath)
     .then((result) => {
@@ -67,7 +65,6 @@ export async function extractCoverImage(bookPath: string, imagePath: string): Pr
       return '';
     });
 }
-
 export async function prepareChapter(bookPath: string, chapterPath: string): Promise<string> {
   return FileUtilModule.prepareChapter(bookPath, chapterPath)
     .then((result) => {
@@ -76,5 +73,15 @@ export async function prepareChapter(bookPath: string, chapterPath: string): Pro
     .catch((error) => {
       console.error('Error preparing chapter:', error);
       return '';
+    });
+}
+export async function parseTOC(bookPath: string, tocHref: string): Promise<any[]> {
+  return FileUtilModule.parseTOC(bookPath, tocHref)
+    .then((result) => {
+      return result;
+    })
+    .catch((error) => {
+      console.error('Error parsing TOC:', error);
+      return [];
     });
 }

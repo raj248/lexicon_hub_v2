@@ -6,6 +6,7 @@ export type Metadata = {
   identifier: string;
   contributor?: string;
   coverImage?: string;
+  toc?: string;
 };
 export type Spine = {
   id: string;
