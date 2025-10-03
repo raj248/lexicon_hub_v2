@@ -1,18 +1,18 @@
 import { useEffect, useState } from 'react';
 import { Text } from './nativewindui/Text';
-import { Dimensions, View, ActivityIndicator, ScrollView } from 'react-native';
+import { Dimensions, View, ActivityIndicator, ScrollView, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import RenderHtml from 'react-native-render-html';
 import * as FileSystem from 'expo-file-system';
 import CustomImageRenderer from '~/BookRenderer/CustomImageRenderer';
-
-const { width } = Dimensions.get('window');
 
 type ChapterViewProps = {
   filePath: string; // path to cached chapter XHTML
 };
 
 export default function ChapterView({ filePath }: ChapterViewProps) {
+  const { width } = useWindowDimensions(); // ← updates on rotation
+
   const [html, setHtml] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 

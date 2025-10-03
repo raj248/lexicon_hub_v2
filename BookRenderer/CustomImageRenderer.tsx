@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
-import { View, TouchableOpacity, StyleSheet, Dimensions, Text } from 'react-native';
+import {
+  View,
+  TouchableOpacity,
+  StyleSheet,
+  Dimensions,
+  Text,
+  useWindowDimensions,
+} from 'react-native';
 import RenderHtml, {
   useInternalRenderer,
   useRendererProps,
@@ -8,8 +15,6 @@ import RenderHtml, {
 import Modal from 'react-native-modal';
 import { ImageZoom } from '@likashefqet/react-native-image-zoom';
 import { gestureHandlerRootHOC } from 'react-native-gesture-handler';
-
-const { width, height } = Dimensions.get('window');
 
 // Module augmentation
 declare module 'react-native-render-html' {
@@ -23,25 +28,28 @@ declare module 'react-native-render-html' {
 
 // Modal content wrapped with gestureHandlerRootHOC
 const ZoomModalContent = gestureHandlerRootHOC(
-  ({ uri, onClose }: { uri: string; onClose: () => void }) => (
-    <View style={styles.modalContainer}>
-      {/* Close cross */}
-      <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-        <Text style={styles.closeText}>✕</Text>
-      </TouchableOpacity>
+  ({ uri, onClose }: { uri: string; onClose: () => void }) => {
+    const { width, height } = useWindowDimensions(); // ← updates on rotation
+    return (
+      <View style={{ ...styles.modalContainer, width, height }}>
+        {/* Close cross */}
+        <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+          <Text style={styles.closeText}>✕</Text>
+        </TouchableOpacity>
 
-      {/* Image zoom */}
-      <ImageZoom
-        uri={uri}
-        minScale={0.5}
-        maxScale={3}
-        doubleTapScale={2}
-        isSingleTapEnabled
-        isDoubleTapEnabled
-        style={{ width, height }}
-      />
-    </View>
-  )
+        {/* Image zoom */}
+        <ImageZoom
+          uri={uri}
+          minScale={0.5}
+          maxScale={3}
+          doubleTapScale={2}
+          isSingleTapEnabled
+          isDoubleTapEnabled
+          style={{ width, height }}
+        />
+      </View>
+    );
+  }
 );
 
 export default function CustomImageRenderer(props: InternalRendererProps<any>) {
@@ -63,7 +71,7 @@ export default function CustomImageRenderer(props: InternalRendererProps<any>) {
 
       <Modal
         isVisible={isViewerVisible}
-        style={{ margin: 0, width }}
+        style={{ margin: 0 }}
         onBackdropPress={() => setViewerVisible(false)}
         onBackButtonPress={() => setViewerVisible(false)}>
         {baseRendererProps.source.uri && (
@@ -80,8 +88,6 @@ export default function CustomImageRenderer(props: InternalRendererProps<any>) {
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
-    width,
-    height,
     backgroundColor: '#000',
   },
   closeButton: {
