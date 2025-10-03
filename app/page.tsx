@@ -6,6 +6,7 @@ import { parseOPFFromBook, prepareChapter } from '~/modules/FileUtil';
 import ChapterView from '~/components/RenderChapter';
 import BookNavigator from '~/BookRenderer/BookNavigator';
 import BookPager from '~/BookRenderer/BookPager';
+import { Stack } from 'expo-router';
 
 export default function Reader() {
   const [book, setBook] = useState<Book | null>(null);
@@ -13,25 +14,33 @@ export default function Reader() {
   const [chapters, setChapters] = useState<Record<string, string> | null>({});
 
   useEffect(() => {
-    const tempBook = useBookStore.getState().getBook('9781718364295');
+    const tempBook = useBookStore
+      .getState()
+      .getBook('https://novelbin.com/b/my-vampire-system#tab-chapters-title');
     if (tempBook) {
-      console.log('Loading book: ', tempBook?.path);
+      // console.log('Loading book: ', tempBook?.path);
       setBook(tempBook);
       parseOPFFromBook(tempBook.path ?? '').then((result) => {
         result?.spine.map((chapter) => {
           prepareChapter(tempBook.path ?? '', chapter.href ?? '').then((html) => {
-            console.log('html', html);
+            // console.log('html', html);
             // setChapter(html);
             setChapters((prev) => ({ ...prev, [chapter.id ?? '-1']: html }));
           });
         });
       });
     }
-    console.log('html');
+    // console.log('html');
   }, []);
 
   return (
     <View style={{ flex: 1 }}>
+      <Stack.Screen
+        options={{
+          title: book?.title ?? 'E-Book',
+        }}
+      />
+
       {/* <Text>Reader Screen</Text> */}
       {/* {book && <Text>Book: {book.title}</Text>} */}
       {/* {chapter && <ChapterView filePath={chapter} />} */}

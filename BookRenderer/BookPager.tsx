@@ -1,5 +1,5 @@
 import PagerView from 'react-native-pager-view';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import ChapterView from '~/components/RenderChapter';
 import { BackHandler, View } from 'react-native';
 import { Text } from '~/components/nativewindui/Text';
@@ -9,18 +9,21 @@ type BookPagerProps = {
   initialIndex?: number;
 };
 
-export default function BookPager({ chapters, initialIndex = 4 }: BookPagerProps) {
+export default function BookPager({ chapters, initialIndex = 0 }: BookPagerProps) {
   const [currentPage, setCurrentPage] = useState(initialIndex);
   const pagerRef = useRef<PagerView>(null);
+  const historyRef = useRef<number[]>([initialIndex]); // start with initial
 
+  // Jump to initialIndex when prop changes
   useEffect(() => {
-    if (pagerRef.current) {
-      pagerRef.current.setPage(initialIndex); // 👈 jump when prop changes
+    if (pagerRef.current && initialIndex !== currentPage) {
+      pagerRef.current.setPage(initialIndex);
+      setCurrentPage(initialIndex);
+      historyRef.current.push(initialIndex);
     }
   }, [initialIndex]);
 
-  const historyRef = useRef<number[]>([]);
-
+  // Handle hardware back button
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
       if (historyRef.current.length > 1) {
@@ -28,45 +31,58 @@ export default function BookPager({ chapters, initialIndex = 4 }: BookPagerProps
         const prev = historyRef.current.pop(); // get previous
         if (prev !== undefined) {
           setCurrentPage(prev);
+          pagerRef.current?.setPage(prev);
         }
-        return true; // prevent app exit
+        return true;
       }
-      return false; // allow default exit
+      return false;
     });
-
     return () => sub.remove();
   }, []);
-  //   console.log('chapters', chapters);
-  console.log('initialIndex', initialIndex);
+
+  // onPageSelected callback
+  const handlePageSelected = useCallback(
+    (e: any) => {
+      const index = e.nativeEvent.position;
+      if (index !== currentPage) {
+        setCurrentPage(index);
+        historyRef.current.push(index);
+      }
+    },
+    [currentPage]
+  );
+
+  // Lazy render chapter pages
+  const renderPage = useCallback(
+    (filePath: string, index: number) => (
+      <View key={index} style={{ flex: 1 }}>
+        {Math.abs(currentPage - index) <= 1 ? (
+          <ChapterView filePath={filePath} />
+        ) : (
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <Text>Loading…</Text>
+          </View>
+        )}
+      </View>
+    ),
+    [currentPage]
+  );
+
+  // Memoize the pages array
+  const pages = useMemo(
+    () => chapters.map((filePath, index) => renderPage(filePath, index)),
+    [chapters, currentPage]
+  );
+
   return (
     <View style={{ flex: 1 }}>
       <PagerView
         ref={pagerRef}
         style={{ flex: 1 }}
         initialPage={initialIndex}
-        onPageSelected={(e) => {
-          const index = e.nativeEvent.position;
-          console.log('onPageSelected', index);
-          setCurrentPage(index);
-          historyRef.current.push(index);
-        }}
-        offscreenPageLimit={2}
         removeClippedSubviews
-        onLayout={(e) => {
-          console.log('onLayout', e.nativeEvent.layout);
-        }}>
-        {chapters.map((filePath, index) => (
-          <View key={index} style={{ flex: 1 }}>
-            {/* <ChapterView filePath={filePath} /> */}
-            {Math.abs(currentPage - index) <= 1 ? ( // lazy load: render only current & neighbors
-              <ChapterView filePath={filePath} />
-            ) : (
-              <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <Text>Loading…</Text>
-              </View>
-            )}
-          </View>
-        ))}
+        onPageSelected={handlePageSelected}>
+        {pages}
       </PagerView>
     </View>
   );
