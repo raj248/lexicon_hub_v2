@@ -502,7 +502,8 @@ class FileUtilModule : Module() {
         val containerXml = zipFile.getInputStream(containerEntry).bufferedReader().use { it.readText() }
         val opfPathRegex = """full-path="([^"]+)""".toRegex()
         val opfPath = opfPathRegex.find(containerXml)?.groups?.get(1)?.value
-        
+        Log.d("FileUtil", "opfPath: $opfPath")
+
         if (opfPath == null) { zipFile.close(); promise.reject("E_NO_OPF", "OPF path not found", null); return@AsyncFunction }
 
         val lastSlash = opfPath.lastIndexOf('/')
@@ -537,6 +538,7 @@ class FileUtilModule : Module() {
   fun parseNCX(epubPath: String, ncxHref: String): List<Map<String, String>> {
       val zipFile = ZipFile(epubPath)
       val ncxEntry = zipFile.getEntry(ncxHref) ?: run {
+          Log.d("FileUtil", "ncxEntry is null")
           zipFile.close()
           return emptyList()
       }
@@ -589,6 +591,7 @@ class FileUtilModule : Module() {
   fun parseNavXHTML(epubPath: String, navHref: String, opfDir: String): List<Map<String, String>> {
       val zipFile = ZipFile(epubPath)
       val navEntry = zipFile.getEntry(navHref) ?: run {
+          Log.d("FileUtil", "navEntry is null")
           zipFile.close()
           return emptyList()
       }
