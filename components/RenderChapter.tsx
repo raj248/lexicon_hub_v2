@@ -8,6 +8,8 @@ import CustomImageRenderer from '~/BookRenderer/CustomImageRenderer';
 import { useColorScheme } from '~/lib/useColorScheme';
 import { Stack } from 'expo-router';
 import { prepareChapter } from '~/modules/FileUtil';
+import { SvgRenderer } from '~/BookRenderer/CustomSVGRenderer';
+import { customHTMLElementModels } from '~/BookRenderer/CustomHTMLRenderModel';
 
 type ChapterViewProps = {
   filePath: string; // path to cached chapter XHTML
@@ -99,7 +101,8 @@ export default function ChapterView({ bookPath, filePath }: ChapterViewProps) {
             // p: { marginBottom: 15, marginHorizontal: 10 },
           }}
           defaultTextProps={{ selectable: true, style: { marginBottom: 15, marginHorizontal: 10 } }}
-          renderers={{ img: CustomImageRenderer }}
+          customHTMLElementModels={customHTMLElementModels}
+          renderers={{ img: CustomImageRenderer, svg: SvgRenderer }}
           renderersProps={{
             img: {
               // @ts-ignore it works, so ignore it

@@ -43,12 +43,16 @@ export async function checkFilePermission(): Promise<boolean> {
 }
 
 export async function parseOPFFromBook(bookPath: string): Promise<OPFData | null> {
+  if (!bookPath) {
+    console.warn('No book path provided');
+    return null;
+  }
   return await FileUtilModule.parseOPFFromBook(bookPath)
     .then((result) => {
       return result;
     })
     .catch((error) => {
-      console.error('Error parsing OPF from book:', error);
+      console.error(`Error parsing OPF from ${bookPath}:`, error);
       return null;
     });
 }

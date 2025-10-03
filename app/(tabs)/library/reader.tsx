@@ -11,7 +11,7 @@ export default function Reader() {
   const [processed_chapter, setProcessedChapter] = useState<string | null>(null);
 
   useEffect(() => {
-    const tempBook = useBookStore.getState().getBook('9781718364295');
+    const tempBook = useBookStore.getState().getBook('9781718500778');
     if (tempBook) {
       console.log('Loading book: ', tempBook?.path);
       setBook(tempBook);

@@ -68,11 +68,11 @@ export default function TabLayout() {
           console.log(index);
         }}>
         <Tabs.Screen
-          name="library/index"
+          name="index"
           options={{
             title: 'Library',
             tabBarIcon: ({ name, color }: { name: string; color: string }) => (
-              <TabBarIcon name="code" color={color} />
+              <TabBarIcon name="folder" color={color} />
             ),
             headerRight: () => (
               <Link href="/modal" asChild>
@@ -82,21 +82,34 @@ export default function TabLayout() {
           }}
         />
         <Tabs.Screen
-          name="progress/index"
+          name="library/[test]"
           options={{
-            title: 'Progress',
+            title: 'Debug',
             tabBarIcon: ({ name, color }: { name: string; color: string }) => (
-              <TabBarIcon name="code" color={color} />
+              <TabBarIcon name="terminal" color={color} />
             ),
+          }}
+        />
+        <Tabs.Screen
+          name="library/reader"
+          options={{
+            hideTabBar: true,
+            title: 'Reader',
+            tabBarIcon: ({ name, color }: { name: string; color: string }) => (
+              <TabBarIcon name="book-open" color={color} />
+            ),
+            tabBarVisible: false, //
           }}
         />
         <Tabs.Screen
           name="two"
           options={{
-            title: 'Tab three',
+            hideTabBar: true,
+            title: 'Settings',
             tabBarIcon: ({ name, color }: { name: string; color: string }) => (
               <TabBarIcon name="code" color={color} />
             ),
+            tabBarVisible: false, //
           }}
         />
       </Tabs>

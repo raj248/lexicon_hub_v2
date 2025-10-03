@@ -26,4 +26,8 @@ export function TabBarProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export const useTabBar = () => useContext(TabBarContext);
+export const useTabBar = () => {
+  const context = useContext(TabBarContext);
+  if (!context) throw new Error('useTabBar must be used within a TabBarProvider');
+  return context;
+};
