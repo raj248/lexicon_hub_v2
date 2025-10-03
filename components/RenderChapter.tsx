@@ -21,7 +21,7 @@ export default function ChapterView({ filePath }: ChapterViewProps) {
       try {
         const content = await FileSystem.readAsStringAsync(`file://${filePath}`);
         setHtml(content);
-        console.log(content);
+        // console.log('Chapter: ', content);
       } catch (e) {
         console.error('Failed to load chapter HTML', e);
       } finally {
@@ -53,14 +53,14 @@ export default function ChapterView({ filePath }: ChapterViewProps) {
   return (
     <SafeAreaView style={{ flex: 1 }} edges={['bottom', 'left', 'right']}>
       <ScrollView
-        style={{ flex: 1, paddingHorizontal: 16 }}
-        contentContainerStyle={{ paddingVertical: 12 }}
+        style={{ flex: 1, width: '100%' }}
+        // contentContainerStyle={{ paddingVertical: 100 }}
         showsVerticalScrollIndicator={true}>
         <RenderHtml
           contentWidth={contentWidth}
           source={{ html }}
           tagsStyles={{
-            img: { maxWidth: '100vw', height: 'auto' },
+            img: { height: 'auto' },
             body: { backgroundColor: 'transparent' },
             h1: { fontSize: 22, fontWeight: 'bold' },
           }}

@@ -63,7 +63,7 @@ export default function CustomImageRenderer(props: InternalRendererProps<any>) {
 
       <Modal
         isVisible={isViewerVisible}
-        style={{ margin: 0 }}
+        style={{ margin: 0, width }}
         onBackdropPress={() => setViewerVisible(false)}
         onBackButtonPress={() => setViewerVisible(false)}>
         {baseRendererProps.source.uri && (

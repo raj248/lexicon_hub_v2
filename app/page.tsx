@@ -1,0 +1,42 @@
+// return blank page
+import { View, Text } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Book, useBookStore } from '~/store/bookStore';
+import { parseOPFFromBook, prepareChapter } from '~/modules/FileUtil';
+import ChapterView from '~/components/RenderChapter';
+import BookNavigator from '~/BookRenderer/BookNavigator';
+import BookPager from '~/BookRenderer/BookPager';
+
+export default function Reader() {
+  const [book, setBook] = useState<Book | null>(null);
+  const [chapter, setChapter] = useState<string | null>(null);
+  const [chapters, setChapters] = useState<Record<string, string> | null>({});
+
+  useEffect(() => {
+    const tempBook = useBookStore.getState().getBook('9781718364295');
+    if (tempBook) {
+      console.log('Loading book: ', tempBook?.path);
+      setBook(tempBook);
+      parseOPFFromBook(tempBook.path ?? '').then((result) => {
+        result?.spine.map((chapter) => {
+          prepareChapter(tempBook.path ?? '', chapter.href ?? '').then((html) => {
+            console.log('html', html);
+            // setChapter(html);
+            setChapters((prev) => ({ ...prev, [chapter.id ?? '-1']: html }));
+          });
+        });
+      });
+    }
+    console.log('html');
+  }, []);
+
+  return (
+    <View style={{ flex: 1 }}>
+      {/* <Text>Reader Screen</Text> */}
+      {/* {book && <Text>Book: {book.title}</Text>} */}
+      {/* {chapter && <ChapterView filePath={chapter} />} */}
+      <BookNavigator chapters={Object.values(chapters ?? {})} />
+      {/* <BookPager chapters={Object.values(chapters ?? {})} /> */}
+    </View>
+  );
+}

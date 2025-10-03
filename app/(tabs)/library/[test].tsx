@@ -250,14 +250,12 @@ export default function Library() {
           });
         }}
       />
-
       <Button
         title="test module (timed)"
         onPress={() => {
           testModule();
         }}
       />
-
       <Button
         title="test legacy (timed)"
         onPress={() => {
@@ -268,6 +266,15 @@ export default function Library() {
         title="Explore cache"
         onPress={() => {
           exploreCache();
+        }}
+      />
+      <Button
+        title="Page"
+        onPress={() => {
+          router.push({
+            pathname: '/page',
+            params: { name: 'Bell' },
+          });
         }}
       />
     </SafeAreaView>
