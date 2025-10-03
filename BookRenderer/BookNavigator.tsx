@@ -3,14 +3,26 @@ import {
   DrawerContentScrollView,
   DrawerItem,
 } from '@react-navigation/drawer';
-import { useState } from 'react';
-import { View, Text } from 'react-native';
+import { useEffect, useState } from 'react';
 import BookPager from './BookPager';
+import { parseOPFFromBook } from '~/modules/FileUtil';
+import { OPFData } from '~/epub-core/types';
 
 const Drawer = createDrawerNavigator();
 
-export default function BookNavigator({ chapters }: { chapters: string[] }) {
+export default function BookNavigator({ bookPath }: { bookPath: string }) {
   const [selectedChapter, setSelectedChapter] = useState(0);
+  const [bookData, setBookData] = useState<OPFData | null>(null);
+
+  useEffect(() => {
+    if (!bookPath) return;
+    parseOPFFromBook(bookPath).then((result) => {
+      setBookData(result);
+      console.log('Parsed book data: ', result?.metadata);
+    });
+  }, [bookPath]);
+
+  if (!bookPath) return null;
 
   return (
     <Drawer.Navigator
@@ -22,7 +34,7 @@ export default function BookNavigator({ chapters }: { chapters: string[] }) {
       }}
       drawerContent={(props) => (
         <DrawerContentScrollView {...props}>
-          {chapters.map((ch, index) => (
+          {bookData?.spine.map((ch, index) => (
             <DrawerItem
               key={index}
               label={`Chapter ${index + 1}`}
@@ -38,7 +50,8 @@ export default function BookNavigator({ chapters }: { chapters: string[] }) {
         {(props) => (
           <BookPager
             {...props}
-            chapters={chapters}
+            bookPath={bookPath}
+            chapters={bookData?.spine.map((ch) => ch.href) ?? []}
             initialIndex={selectedChapter} // 👈 pass down controlled index
           />
         )}

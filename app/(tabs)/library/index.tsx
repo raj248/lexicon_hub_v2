@@ -1,6 +1,6 @@
 'use client';
 
-import { useNavigation } from 'expo-router';
+import { router, useNavigation } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Pressable, RefreshControl, useWindowDimensions } from 'react-native';
 import { Image } from 'expo-image';
@@ -77,7 +77,10 @@ export default function Library() {
           className="rounded-lg p-2"
           onPress={() =>
             InteractionManager.runAfterInteractions(() => {
-              // router.push(`/bookDetails?bookId=${item.id}`)
+              router.push({
+                pathname: '/page',
+                params: { bookId: item.id },
+              });
             })
           }
           style={{

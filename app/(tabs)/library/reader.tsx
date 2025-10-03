@@ -8,6 +8,7 @@ import ChapterView from '~/components/RenderChapter';
 export default function Reader() {
   const [book, setBook] = useState<Book | null>(null);
   const [chapter, setChapter] = useState<string | null>(null);
+  const [processed_chapter, setProcessedChapter] = useState<string | null>(null);
 
   useEffect(() => {
     const tempBook = useBookStore.getState().getBook('9781718364295');
@@ -15,9 +16,9 @@ export default function Reader() {
       console.log('Loading book: ', tempBook?.path);
       setBook(tempBook);
       parseOPFFromBook(tempBook.path ?? '').then((result) => {
+        setChapter(result?.spine[1].href ?? '');
         prepareChapter(tempBook.path ?? '', result?.spine[1].href ?? '').then((html) => {
-          console.log('html', html);
-          setChapter(html);
+          setProcessedChapter(html);
         });
       });
     }
@@ -28,7 +29,7 @@ export default function Reader() {
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
       <Text>Reader Screen</Text>
       {book && <Text>Book: {book.title}</Text>}
-      {chapter && <ChapterView filePath={chapter} />}
+      {chapter && <ChapterView bookPath={book?.path ?? ''} filePath={chapter} />}
     </View>
   );
 }

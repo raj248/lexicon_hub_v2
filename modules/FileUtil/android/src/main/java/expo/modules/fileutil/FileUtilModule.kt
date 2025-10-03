@@ -392,9 +392,24 @@ class FileUtilModule : Module() {
 
     AsyncFunction("prepareChapter") { epubPath: String, chapterHref: String, promise: Promise ->
         try {
-            val cacheDir = File(appContext.cacheDirectory, epubPath.substringAfterLast("/").substringBeforeLast("."))
+            // Create cache dir based on EPUB filename (without extension)
+            val cacheDir = File(
+                appContext.cacheDirectory,
+                epubPath.substringAfterLast("/").substringBeforeLast(".")
+            )
             if (!cacheDir.exists()) cacheDir.mkdirs()
 
+            // Cached chapter file path
+            val cachedChapterFile = File(cacheDir, chapterHref)
+
+            // ✅ Early return if chapter is already cached
+            if (cachedChapterFile.exists()) {
+                Log.d("FileUtil", "Chapter is already cached: ${cachedChapterFile.absolutePath}")
+                promise.resolve(cachedChapterFile.absolutePath)
+                return@AsyncFunction
+            }
+
+            // Otherwise, extract from zip
             val zipFile = ZipFile(epubPath)
             val entry: ZipEntry? = zipFile.getEntry(chapterHref)
 
@@ -405,39 +420,27 @@ class FileUtilModule : Module() {
             }
 
             val chapterHtml = zipFile.getInputStream(entry).bufferedReader().use { it.readText() }
-
-            // --- Parse XHTML using Jsoup ---
             val doc = Jsoup.parse(chapterHtml)
 
             // --- Handle images ---
             doc.select("img").forEach { img ->
                 val src = img.attr("src")
-                Log.d("FileUtil", "src: $src")
                 if (src.isNotEmpty()) {
-                    // Parent folder of current chapter
                     val chapterDir = File(chapterHref).parentFile
-
-                    // Resolve the relative src against the chapter directory
                     val resourcePath = File(chapterDir, src).normalize().path
-                    Log.d("FileUtil", "Resolved resourcePath: $resourcePath")
-
-                    // Check in zip
                     val resourceEntry = zipFile.getEntry(resourcePath)
+
                     if (resourceEntry != null) {
                         val resourceBytes = zipFile.getInputStream(resourceEntry).readBytes()
-
-                        // Cache target file
                         val targetFile = File(cacheDir, resourcePath)
                         targetFile.parentFile?.mkdirs()
                         targetFile.writeBytes(resourceBytes)
-
-                        // Rewrite HTML img src to cached file:// path
                         img.attr("src", "file://${targetFile.absolutePath}")
                     }
                 }
             }
 
-            // --- Handle CSS files ---
+            // --- Handle CSS ---
             doc.select("link[rel=stylesheet]").forEach { link ->
                 val href = link.attr("href")
                 if (href.isNotEmpty()) {
@@ -448,14 +451,12 @@ class FileUtilModule : Module() {
                         val targetFile = File(cacheDir, resourceZipPath)
                         targetFile.parentFile?.mkdirs()
                         targetFile.writeBytes(resourceBytes)
-
-                        // Rewrite href in HTML
                         link.attr("href", "file://${targetFile.absolutePath}")
                     }
                 }
             }
 
-            // --- Handle scripts (optional) ---
+            // --- Handle JS (if any) ---
             doc.select("script[src]").forEach { script ->
                 val src = script.attr("src")
                 if (src.isNotEmpty()) {
@@ -466,20 +467,16 @@ class FileUtilModule : Module() {
                         val targetFile = File(cacheDir, resourceZipPath)
                         targetFile.parentFile?.mkdirs()
                         targetFile.writeBytes(resourceBytes)
-
-                        // Rewrite src
                         script.attr("src", "file://${targetFile.absolutePath}")
                     }
                 }
             }
 
-            // --- Write rewritten chapter to cache ---
-            val cachedChapterFile = File(cacheDir, chapterHref)
+            // --- Save rewritten chapter to cache ---
             cachedChapterFile.parentFile?.mkdirs()
             cachedChapterFile.writeText(doc.outerHtml())
 
             zipFile.close()
-
             promise.resolve(cachedChapterFile.absolutePath)
 
         } catch (e: Exception) {

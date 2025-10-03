@@ -7,12 +7,14 @@ import * as FileSystem from 'expo-file-system';
 import CustomImageRenderer from '~/BookRenderer/CustomImageRenderer';
 import { useColorScheme } from '~/lib/useColorScheme';
 import { Stack } from 'expo-router';
+import { prepareChapter } from '~/modules/FileUtil';
 
 type ChapterViewProps = {
   filePath: string; // path to cached chapter XHTML
+  bookPath: string; // path to book
 };
 
-export default function ChapterView({ filePath }: ChapterViewProps) {
+export default function ChapterView({ bookPath, filePath }: ChapterViewProps) {
   const { isDarkColorScheme } = useColorScheme();
   const { width: screenWidth } = useWindowDimensions();
   const [html, setHtml] = useState<string | null>(null);
@@ -23,15 +25,17 @@ export default function ChapterView({ filePath }: ChapterViewProps) {
 
   useEffect(() => {
     const loadHtml = async () => {
+      const local_start = performance.now();
       console.log('Loading chapter: ', filePath);
       try {
-        const content = await FileSystem.readAsStringAsync(`file://${filePath}`);
+        const htmlPath = await prepareChapter(bookPath, filePath);
+        const content = await FileSystem.readAsStringAsync(`file://${htmlPath}`);
         setHtml(content);
         // console.log('Chapter: ', content);
       } catch (e) {
         console.error('Failed to load chapter HTML', e);
       } finally {
-        // console.log('Chapter loaded in', (performance.now() - start).toFixed(2), 'ms');
+        console.log('Chapter loaded in', (performance.now() - local_start).toFixed(2), 'ms');
         setLoading(false);
       }
     };
@@ -59,6 +63,7 @@ export default function ChapterView({ filePath }: ChapterViewProps) {
     <SafeAreaView style={{ flex: 1 }} edges={['bottom', 'left', 'right']}>
       <ScrollView style={{ flex: 1, width: '100%' }} showsVerticalScrollIndicator={true}>
         <RenderHtml
+          // debug
           contentWidth={contentWidth}
           source={{ html: htmlContent }}
           enableExperimentalBRCollapsing
@@ -91,9 +96,9 @@ export default function ChapterView({ filePath }: ChapterViewProps) {
               marginHorizontal: 10,
               marginVertical: 20,
             },
-            p: { marginBottom: 15, marginHorizontal: 10 },
+            // p: { marginBottom: 15, marginHorizontal: 10 },
           }}
-          defaultTextProps={{ selectable: true }}
+          defaultTextProps={{ selectable: true, style: { marginBottom: 15, marginHorizontal: 10 } }}
           renderers={{ img: CustomImageRenderer }}
           renderersProps={{
             img: {

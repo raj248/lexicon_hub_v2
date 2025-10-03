@@ -273,7 +273,7 @@ export default function Library() {
         onPress={() => {
           router.push({
             pathname: '/page',
-            params: { name: 'Bell' },
+            params: { bookId: '9798855406993' },
           });
         }}
       />

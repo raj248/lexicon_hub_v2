@@ -6,10 +6,11 @@ import { Text } from '~/components/nativewindui/Text';
 
 type BookPagerProps = {
   chapters: string[]; // list of cached XHTML chapter file paths
+  bookPath: string; // path to book
   initialIndex?: number;
 };
 
-export default function BookPager({ chapters, initialIndex = 0 }: BookPagerProps) {
+export default function BookPager({ bookPath, chapters, initialIndex = 0 }: BookPagerProps) {
   const [currentPage, setCurrentPage] = useState(initialIndex);
   const pagerRef = useRef<PagerView>(null);
   const historyRef = useRef<number[]>([initialIndex]); // start with initial
@@ -56,8 +57,8 @@ export default function BookPager({ chapters, initialIndex = 0 }: BookPagerProps
   const renderPage = useCallback(
     (filePath: string, index: number) => (
       <View key={index} style={{ flex: 1 }}>
-        {Math.abs(currentPage - index) <= 1 ? (
-          <ChapterView filePath={filePath} />
+        {Math.abs(currentPage - index) <= 2 ? (
+          <ChapterView bookPath={bookPath} filePath={filePath} />
         ) : (
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
             <Text>Loading…</Text>
