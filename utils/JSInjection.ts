@@ -146,21 +146,39 @@ export const injectedJS = `(function () {
   // fallback periodic every 1000ms (in case scroll events missed)
   setInterval(maybeReportProgress, 1000);
 
-// ---- Gesture detection (lightweight) ----
+// ---- Gesture detection (edge-aware horizontal swipe) ----
 let touchStartX = 0,
     touchStartY = 0,
     touchStartTime = 0,
-    isSwiping = false;
+    isSwiping = false,
+    horizontalSwipeStarted = false;
 
 const SWIPE_MIN_DISTANCE = Math.min(window.innerWidth * 0.12, 40); // px
 const SWIPE_MAX_VERTICAL_DELTA = 80; // px
 const SWIPE_MAX_TIME = 600; // ms
 
 function postSwipeProgress(dx) {
-  // dx: positive = right, negative = left
   window.ReactNativeWebView.postMessage(
     JSON.stringify({ type: 'swipe-progress', deltaX: dx })
   );
+}
+
+// Check if scroll is at left/right edge to allow page swipe
+function canStartPageSwipe(dx) {
+  const scrollLeft = document.documentElement.scrollLeft || document.body.scrollLeft;
+  const scrollWidth = document.documentElement.scrollWidth || document.body.scrollWidth;
+  const clientWidth = document.documentElement.clientWidth || window.innerWidth;
+  const TOLERANCE = 5; // px
+
+  if (dx < 0) {
+    // swipe left => next page
+    // allow if at right edge OR content width <= client width (no scroll)
+    return scrollLeft + clientWidth >= scrollWidth - TOLERANCE || scrollWidth <= clientWidth;
+  } else {
+    // swipe right => previous page
+    // allow if at left edge OR content width <= client width (no scroll)
+    return scrollLeft <= TOLERANCE || scrollWidth <= clientWidth;
+  }
 }
 
 function onTouchStart(e) {
@@ -171,6 +189,7 @@ function onTouchStart(e) {
   touchStartY = t.clientY;
   touchStartTime = Date.now();
   isSwiping = true;
+  horizontalSwipeStarted = false;
 }
 
 function onTouchMove(e) {
@@ -182,11 +201,20 @@ function onTouchMove(e) {
   const dx = t.clientX - touchStartX;
   const dy = Math.abs(t.clientY - touchStartY);
 
-  // Only track horizontal swipe
-  if (dy < SWIPE_MAX_VERTICAL_DELTA) {
-    postSwipeProgress(dx);
-    e.preventDefault && e.preventDefault(); // prevent browser scroll
+  // Only track horizontal swipe if vertical movement is small
+  if (!horizontalSwipeStarted) {
+    if (Math.abs(dx) > SWIPE_MIN_DISTANCE && dy < SWIPE_MAX_VERTICAL_DELTA && canStartPageSwipe(dx)) {
+      horizontalSwipeStarted = true;
+    } else {
+      // Not ready for page swipe, allow normal scroll
+        // postSwipeProgress(dx);
+      return;
+    }
   }
+
+  // Only now handle page swipe
+  postSwipeProgress(dx);
+  e.preventDefault && e.preventDefault(); // prevent browser scroll during page swipe
 }
 
 function onTouchEnd(e) {
@@ -200,19 +228,19 @@ function onTouchEnd(e) {
   const dy = Math.abs(t.clientY - touchStartY);
   const dt = Date.now() - touchStartTime;
 
-  if (dt <= SWIPE_MAX_TIME && dy < SWIPE_MAX_VERTICAL_DELTA && Math.abs(dx) >= SWIPE_MIN_DISTANCE) {
+  if (horizontalSwipeStarted && dt <= SWIPE_MAX_TIME && dy < SWIPE_MAX_VERTICAL_DELTA && Math.abs(dx) >= SWIPE_MIN_DISTANCE) {
     const direction = dx < 0 ? 'left' : 'right';
     window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'swipe-end', direction }));
   } else {
-    // swipe cancelled
     window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'swipe-cancel' }));
   }
 }
 
 // Attach listeners
 document.addEventListener('touchstart', onTouchStart, { passive: true });
-// document.addEventListener('touchmove', onTouchMove, { passive: false });
+document.addEventListener('touchmove', onTouchMove, { passive: false });
 document.addEventListener('touchend', onTouchEnd, { passive: false });
+
 
   // ---- Listen for messages from RN to update styles / jump to id / control gestures ----
   function handleMessageFromRN(event) {
