@@ -1,14 +1,18 @@
 import { Stack } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { ScreenContent } from '~/components/ScreenContent';
+import { FileUtilView } from '~/modules/FileUtil';
 
 export default function Home() {
   return (
     <>
       <Stack.Screen options={{ title: 'Tab Two' }} />
       <View style={styles.container}>
-        <ScreenContent path="app/(tabs)/two.tsx" title="Tab Two" />
+        <FileUtilView
+          url="file:///data/user/0/com.hub.lexicon/cache/I’m the Evil Lord of an Intergalactic Empire! - Volume 08/OEBPS/Text/CoverPage.html"
+          onLoad={() => console.log('loaded')}
+          style={{ flex: 1 }}
+        />
       </View>
     </>
   );

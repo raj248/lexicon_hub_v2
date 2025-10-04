@@ -523,7 +523,14 @@ class FileUtilModule : Module() {
         }
     }
 
-
+    View(FileUtilView::class) {
+      // Defines a setter for the `url` prop.
+      Prop("url") { view: FileUtilView, url: URL ->
+        view.webView.loadUrl(url.toString())
+      }
+      // Defines an event that the view can send to JavaScript.
+      Events("onLoad")
+    }
 
   }
 

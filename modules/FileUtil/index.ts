@@ -85,3 +85,5 @@ export async function parseTOC(bookPath: string, tocHref: string): Promise<any[]
       return [];
     });
 }
+
+export { default as FileUtilView } from './src/FileUtilView';

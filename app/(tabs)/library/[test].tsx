@@ -282,6 +282,15 @@ export default function Library() {
           });
         }}
       />
+      <Button
+        title="Web Reader"
+        onPress={() => {
+          router.push({
+            pathname: '/three',
+            params: { bookId: '9798855406993' },
+          });
+        }}
+      />
     </SafeAreaView>
   );
 }
