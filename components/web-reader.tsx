@@ -11,6 +11,18 @@ type ChapterViewProps = {
   onLoad?: () => void;
 };
 
+function makeInjectedCSS(theme: any, fontSize = 16, lineHeight = 1.45) {
+  return `
+    html, body { background: ${theme.background}; color: ${theme.onBackground}; margin: 0; padding: 0; -webkit-text-size-adjust: none; }
+    body { font-family: 'System'; font-size: ${fontSize}px; line-height: ${lineHeight}; padding: 16px; }
+    img { max-width: 100%; height: auto; display: block; margin: 8px auto; }
+    p { margin-bottom: 1rem; }
+    h1,h2,h3 { margin: 1rem 0; }
+    pre, code { white-space: pre-wrap; word-break: break-word; }
+    /* add other rules you need */
+  `;
+}
+
 export default function ChapterView({ filePath, baseDir: baseUrl, onLoad }: ChapterViewProps) {
   const webviewRef = useRef<WebView>(null);
   const [html, setHtml] = useState<string | null>(null);
@@ -88,7 +100,6 @@ export default function ChapterView({ filePath, baseDir: baseUrl, onLoad }: Chap
         onHttpError={(event) => {
           console.log('onHttpError', event);
         }}
-        originWhitelist={['*']}
         allowFileAccess={true} // necessary for local files
         allowFileAccessFromFileURLs={true} // necessary for local files
         allowUniversalAccessFromFileURLs={true} // necessary for local files
