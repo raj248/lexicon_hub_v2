@@ -1,8 +1,9 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import WebView from 'react-native-webview';
 import * as FileSystem from 'expo-file-system';
+import { injectedJS } from '~/utils/JSInjection';
 
 type ChapterViewProps = {
   filePath: string; // absolute path to cached HTML
@@ -13,10 +14,35 @@ type ChapterViewProps = {
 export default function ChapterView({ filePath, baseDir: baseUrl, onLoad }: ChapterViewProps) {
   const webviewRef = useRef<WebView>(null);
   const [html, setHtml] = useState<string | null>(null);
-
-  // Encode the file URI properly (handles spaces and special characters)
-  // const fileUri = encodeURI(`file://${filePath}`);
   const fileUri = `file://${filePath}`;
+
+  const handleMessage = useCallback((event: { nativeEvent: { data: any } }) => {
+    try {
+      const data = JSON.parse(event.nativeEvent.data);
+      switch (data.type) {
+        case 'imageClick':
+          console.log('imageClick', data);
+          // onImageTap && onImageTap(data);
+          break;
+        case 'progress':
+          console.log('progress', data);
+          // onProgress && onProgress(data);
+          break;
+        case 'swipe':
+          console.log('swipe', data);
+          // onSwipe && onSwipe(data.direction);
+          break;
+        case 'bridgeReady':
+          // send initial styles
+          // const css = cssOverride || ''; // build your CSS string
+
+          // webviewRef.current?.injectJavaScript(`window.postMessage(${JSON.stringify(JSON.stringify({type:'setStyles',css}))}); true;`);
+          break;
+      }
+    } catch (e) {
+      console.warn('Invalid message from webview', e);
+    }
+  }, []);
 
   useEffect(() => {
     const loadHtml = async () => {
@@ -44,9 +70,6 @@ export default function ChapterView({ filePath, baseDir: baseUrl, onLoad }: Chap
         ref={webviewRef}
         suppressMenuItems={[]}
         menuItems={[{ key: '1', label: 'Coopy' }]}
-        onOpenWindow={() => {
-          console.log('onOpenWindow');
-        }}
         onCustomMenuSelection={(event) => {
           console.log('onCustomMenuSelection', event);
         }}
@@ -56,8 +79,8 @@ export default function ChapterView({ filePath, baseDir: baseUrl, onLoad }: Chap
         onMessage={(event) => {
           console.log('onMessage', event);
         }}
+        injectedJavaScriptBeforeContentLoaded={injectedJS}
         source={{
-          uri: fileUri,
           html,
           baseUrl: `file://${baseUrl}/OEBPS/Text/`,
           headers: { 'Content-Type': 'application/xhtml+xml; charset=UTF-8' },

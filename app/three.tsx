@@ -29,7 +29,7 @@ export default function Three() {
       // console.log('Loading book: ', tempBook?.path);
       setBook(tempBook);
       parseOPFFromBook(tempBook.path ?? '').then((result) => {
-        prepareChapter(tempBook.path ?? '', result?.spine[9].href ?? '').then((html) => {
+        prepareChapter(tempBook.path ?? '', result?.spine[1].href ?? '').then((html) => {
           setChapter(html);
           setBaseUrl(result?.baseDir ?? '');
         });

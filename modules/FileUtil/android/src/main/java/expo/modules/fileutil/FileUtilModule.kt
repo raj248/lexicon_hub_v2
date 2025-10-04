@@ -415,12 +415,12 @@ class FileUtilModule : Module() {
             // Cached chapter file path
             val cachedChapterFile = File(cacheDir, chapterHref)
 
-            ✅ Early return if chapter is already cached
-            if (cachedChapterFile.exists()) {
-                Log.d("FileUtil", "Chapter is already cached: ${cachedChapterFile.absolutePath}")
-                promise.resolve(cachedChapterFile.absolutePath)
-                return@AsyncFunction
-            }
+            // ✅ Early return if chapter is already cached
+            // if (cachedChapterFile.exists()) {
+            //     Log.d("FileUtil", "Chapter is already cached: ${cachedChapterFile.absolutePath}")
+            //     promise.resolve(cachedChapterFile.absolutePath)
+            //     return@AsyncFunction
+            // }
 
             // Otherwise, extract from zip
             val zipFile = ZipFile(epubPath)
