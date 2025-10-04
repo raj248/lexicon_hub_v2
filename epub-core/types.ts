@@ -16,6 +16,7 @@ export type Spine = {
 export type OPFData = {
   metadata: Metadata;
   spine: Spine[];
+  baseDir: string;
 };
 export type TocEntry = {
   id: string; // The unique ID of the chapter

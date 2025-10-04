@@ -184,9 +184,10 @@ export default function Library() {
           'result',
           // result.metadata.title,
           // result?.metadata.coverImage ?? result?.metadata.title + ' (no cover)'
-          result?.metadata.title,
-          result?.metadata.toc,
-          result?.metadata.identifier
+          result?.baseDir,
+          result?.metadata.title
+          // result?.metadata.toc,
+          // result?.metadata.identifier
         );
         // console.log('result', result?.spine);
       });

@@ -317,6 +317,8 @@ class FileUtilModule : Module() {
         if (!isValidImage(coverHref)) {
           coverHref = manifestList.find { isValidImage(it.href) }?.absoluteHref
         }
+        val bookFileName = epubPath.substringAfterLast("/").substringBeforeLast(".")
+        val baseDir = "/data/user/0/com.hub.lexicon/cache/$bookFileName"
 
         val opfData = mapOf(
           "metadata" to mapOf(
@@ -329,7 +331,8 @@ class FileUtilModule : Module() {
             "coverImage" to (coverHref ?: ""),
             "toc" to (tocHref ?: "")
           ),
-          "spine" to spineList
+          "spine" to spineList,
+          "baseDir" to baseDir
         )
 
         promise.resolve(opfData)
@@ -412,7 +415,7 @@ class FileUtilModule : Module() {
             // Cached chapter file path
             val cachedChapterFile = File(cacheDir, chapterHref)
 
-            // ✅ Early return if chapter is already cached
+            ✅ Early return if chapter is already cached
             if (cachedChapterFile.exists()) {
                 Log.d("FileUtil", "Chapter is already cached: ${cachedChapterFile.absolutePath}")
                 promise.resolve(cachedChapterFile.absolutePath)

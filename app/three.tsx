@@ -13,7 +13,9 @@ export default function Three() {
   const [book, setBook] = useState<Book | null>(null);
   const [chapter, setChapter] = useState<string | null>(null);
   const [chapters, setChapters] = useState<Record<string, string> | null>({});
+  const [baseUrl, setBaseUrl] = useState<string | null>(null);
   const { bookId } = useLocalSearchParams();
+
   useEffect(() => {
     if (!bookId) return;
     const tempBook = useBookStore
@@ -21,14 +23,15 @@ export default function Three() {
       // .getBook('https://novelbin.com/b/my-vampire-system#tab-chapters-title');
       // .getBook('9780136885979');
       // .getBook('9781718500778');
-      // .getBook('9798855406993');
-      .getBook(bookId as string);
+      .getBook('9798855406993');
+    //   .getBook(bookId as string);
     if (tempBook) {
       // console.log('Loading book: ', tempBook?.path);
       setBook(tempBook);
       parseOPFFromBook(tempBook.path ?? '').then((result) => {
-        prepareChapter(tempBook.path ?? '', result?.spine[0].href ?? '').then((html) => {
+        prepareChapter(tempBook.path ?? '', result?.spine[9].href ?? '').then((html) => {
           setChapter(html);
+          setBaseUrl(result?.baseDir ?? '');
         });
         // result?.spine.map((chapter) => {
         //   prepareChapter(tempBook.path ?? '', chapter.href ?? '').then((html) => {
@@ -53,7 +56,7 @@ export default function Three() {
       {/* <Text>Reader Screen</Text> */}
       {/* {book && <Text>Book: {book.title}</Text>} */}
       {/* {chapter && <ChapterView filePath={chapter} />} */}
-      <ChapterView filePath={chapter ?? ''} />
+      <ChapterView filePath={chapter ?? ''} baseDir={baseUrl ?? ''} />
       {/* <BookPager chapters={Object.values(chapters ?? {})} /> */}
     </View>
   );
