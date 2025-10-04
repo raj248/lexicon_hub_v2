@@ -184,8 +184,9 @@ export default function Library() {
           'result',
           // result.metadata.title,
           // result?.metadata.coverImage ?? result?.metadata.title + ' (no cover)'
-          // result?.metadata.title,
-          result?.metadata.toc
+          result?.metadata.title,
+          result?.metadata.toc,
+          result?.metadata.identifier
         );
         // console.log('result', result?.spine);
       });
@@ -245,9 +246,10 @@ export default function Library() {
       <Button
         title="test module"
         onPress={() => {
-          FileUtil.parseOPFFromBook(books[15]).then((result) => {
+          const i = 4;
+          FileUtil.parseOPFFromBook(books[books.length - i]).then((result) => {
             console.log('result', result?.metadata);
-            FileUtil.parseTOC(books[15], result?.metadata.toc ?? '').then((toc) => {
+            FileUtil.parseTOC(books[books.length - i], result?.metadata.toc ?? '').then((toc) => {
               console.log('toc', toc);
             });
           });

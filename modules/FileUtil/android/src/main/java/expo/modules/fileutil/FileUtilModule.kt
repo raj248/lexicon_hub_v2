@@ -213,7 +213,6 @@ class FileUtilModule : Module() {
                     val absoluteHref = if (opfDir.isNotEmpty()) "$opfDir/$href" else href
                     val item = ManifestItem(id, href, properties, absoluteHref.replace(Regex("/+"), "/"))
                     manifestList.add(item)
-                    Log.d("FileUtil", "item: $item")
                     if (id != null) manifestMap[id] = item
                   }
                 }
@@ -278,8 +277,11 @@ class FileUtilModule : Module() {
         }
 
         // Step 2b: Find TOC href
-        tocHref = manifestList.find { it.properties?.contains("nav") == true }?.absoluteHref
-            ?: manifestList.find { it.href?.endsWith(".ncx", ignoreCase = true) == true }?.absoluteHref
+        // tocHref = manifestList.find { it.properties?.contains("nav") == true }?.absoluteHref
+        //     ?: manifestList.find { it.href?.endsWith(".ncx", ignoreCase = true) == true }?.absoluteHref
+
+        tocHref = manifestList.find { it.href?.endsWith(".ncx", ignoreCase = true) == true }?.absoluteHref
+            ?: manifestList.find { it.properties?.contains("nav") == true }?.absoluteHref
 
 
         // Log.d("FileUtil", "uniqueIdentifierId value: $metadataIdentifier")
@@ -553,10 +555,12 @@ class FileUtilModule : Module() {
       var navLabel: String? = null
       var contentSrc: String? = null
 
+      Log.d("FileUtil", "ncxHref: $ncxHref")
       while (eventType != XmlPullParser.END_DOCUMENT) {
           when (eventType) {
               XmlPullParser.START_TAG -> {
                   currentTag = parser.name
+                  Log.d("FileUtil", "currentTag: $currentTag")
                   if (currentTag == "navPoint") {
                       navLabel = null
                       contentSrc = null
@@ -607,17 +611,22 @@ class FileUtilModule : Module() {
       var insideAnchor = false
       var currentTitle: String? = null
       var currentHref: String? = null
+      Log.d("FileUtil", "navHref: $navHref")
+
+      val tocDir = navHref.substringBeforeLast("/")
+      Log.d("FileUtil", "tocDir: $tocDir")
 
       while (eventType != XmlPullParser.END_DOCUMENT) {
           when (eventType) {
               XmlPullParser.START_TAG -> {
                   when (parser.name.lowercase()) {
                       "nav" -> {
-                          val typeAttr = parser.getAttributeValue(null, "epub:type")
+                          val typeAttr = parser.getAttributeValue(null, "type")
                           if (typeAttr?.contains("toc") == true) insideNav = true
                       }
                       "a" -> if (insideNav) {
                           currentHref = parser.getAttributeValue(null, "href")?.trim()
+                          Log.d("FileUtil", "currentHref: $currentHref")
                           insideAnchor = true
                       }
                   }
@@ -631,9 +640,10 @@ class FileUtilModule : Module() {
                   when (parser.name.lowercase()) {
                       "a" -> {
                           if (insideAnchor && !currentHref.isNullOrEmpty() && !currentTitle.isNullOrEmpty()) {
-                              // Resolve relative path
-                              val absoluteHref = if (opfDir.isNotEmpty()) "$opfDir/$currentHref" else currentHref
-                              chapters.add(mapOf("title" to currentTitle, "href" to absoluteHref.replace(Regex("/+"), "/")))
+                              if(tocDir.isNotEmpty()) {
+                                val chapterPath = File(tocDir, currentHref).normalize().path
+                                chapters.add(mapOf("title" to currentTitle, "href" to chapterPath))
+                              }
                           }
                           insideAnchor = false
                           currentTitle = null
