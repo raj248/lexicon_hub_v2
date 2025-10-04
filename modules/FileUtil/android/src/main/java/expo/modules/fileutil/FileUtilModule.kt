@@ -554,24 +554,39 @@ class FileUtilModule : Module() {
       var currentTag: String? = null
       var navLabel: String? = null
       var contentSrc: String? = null
+      val ncxBasePath = ncxHref.substringBeforeLast('/', "")
 
       Log.d("FileUtil", "ncxHref: $ncxHref")
       while (eventType != XmlPullParser.END_DOCUMENT) {
           when (eventType) {
               XmlPullParser.START_TAG -> {
                   currentTag = parser.name
-                  Log.d("FileUtil", "currentTag: $currentTag")
                   if (currentTag == "navPoint") {
                       navLabel = null
                       contentSrc = null
                   }
+                  if (currentTag == "content") {
+                    val rawSrc = parser.getAttributeValue(null, "src")?.trim()
+                    if (!rawSrc.isNullOrEmpty()) {
+                        // Resolve relative to NCX folder
+                        contentSrc = if (rawSrc.contains("://")) {
+                            rawSrc // absolute URL, rare but possible
+                        } else if (ncxBasePath.isNotEmpty()) {
+                            // Normalize to handle "../" etc.
+                            File(ncxBasePath, rawSrc).invariantSeparatorsPath
+                        } else {
+                            rawSrc
+                        }
+                    }
+                }
+                
               }
               XmlPullParser.TEXT -> {
                   if (currentTag == "text") navLabel = parser.text.trim()
-                  if (currentTag == "content") contentSrc = parser.getAttributeValue(null, "src")?.trim()
               }
               XmlPullParser.END_TAG -> {
                   if (parser.name == "navPoint") {
+                      Log.d("FileUtil", "navLabel: $navLabel, contentSrc: $contentSrc")
                       if (!contentSrc.isNullOrEmpty() && !navLabel.isNullOrEmpty()) {
                           chapters.add(
                               mapOf(
