@@ -5,10 +5,13 @@ import { View, ActivityIndicator } from 'react-native';
 import WebView from 'react-native-webview';
 import * as FileSystem from 'expo-file-system';
 import { injectedJS } from '~/utils/JSInjection';
+import { parseOPFFromBook, prepareChapter } from '~/modules/FileUtil';
+import { OPFData } from '~/epub-core/types';
 
 type ChapterViewProps = {
-  filePath: string; // absolute path to cached HTML
-  baseDir?: string;
+  bookPath: string; // absolute path to book
+  index: number; // index of chapter in book
+  setIndex: React.Dispatch<React.SetStateAction<number>>; // set index of chapter in book
   onLoad?: () => void;
 };
 
@@ -24,10 +27,18 @@ function makeInjectedCSS(theme: any, fontSize = 16, lineHeight = 1.45) {
   `;
 }
 
-export default function ChapterView({ filePath, baseDir: baseUrl, onLoad }: ChapterViewProps) {
+export default function ChapterView({
+  bookPath,
+  index,
+  setIndex,
+
+  onLoad,
+}: ChapterViewProps) {
   const webviewRef = useRef<WebView>(null);
+  const [bookData, setBookData] = useState<OPFData | null>(null);
   const [html, setHtml] = useState<string | null>(null);
-  const fileUri = `file://${filePath}`;
+  const [filePath, setFilePath] = useState<string | null>(null);
+  let lastSwipeTime = 0;
 
   const handleMessage = useCallback((event: { nativeEvent: { data: any } }) => {
     try {
@@ -41,10 +52,15 @@ export default function ChapterView({ filePath, baseDir: baseUrl, onLoad }: Chap
           console.log('progress', data);
           // onProgress && onProgress(data);
           break;
+
         case 'swipe-end':
-          console.log('swipe', data);
-          // onSwipe && onSwipe(data.direction);
+          console.log('lastSwipeTime', lastSwipeTime);
+          const now = Date.now();
+          if (now - lastSwipeTime < 500) return; // ignore rapid swipes
+          lastSwipeTime = now;
+          setIndex((prev: number) => (data.direction === 'left' ? prev + 1 : prev - 1));
           break;
+
         case 'bridgeReady':
           // send initial styles
           // const css = cssOverride || ''; // build your CSS string
@@ -60,24 +76,45 @@ export default function ChapterView({ filePath, baseDir: baseUrl, onLoad }: Chap
   }, []);
 
   useEffect(() => {
+    if (!bookPath) {
+      console.log('No book path provided.');
+      return;
+    }
+    parseOPFFromBook(bookPath).then((result) => {
+      setBookData(result);
+      result?.spine.map((ch, i) => {
+        if (i === index) {
+          prepareChapter(bookPath, ch.href).then((chapterPath) => {
+            setFilePath(chapterPath);
+          });
+          return;
+        }
+      });
+    });
+  }, [bookPath, index]);
+
+  useEffect(() => {
     const loadHtml = async () => {
+      console.log('Loading chapter: ', filePath ?? '');
       try {
         if (!filePath) return;
         const content = await FileSystem.readAsStringAsync(`file://${filePath}`);
         setHtml(content);
-        // console.log('Chapter: ', content.slice(0, 600));
-        // console.log(baseUrl);
-        console.log('fileUri', fileUri);
       } catch (e) {
         console.error('Failed to load chapter HTML', e);
+      } finally {
+        console.log('Chapter loaded');
       }
     };
-
     loadHtml();
   }, [filePath]);
 
+  console.warn('Re-render');
+
   if (!html) return null;
   if (!filePath) return null;
+  if (!bookPath) return null;
+
   return (
     <View style={{ flex: 1 }}>
       <WebView
