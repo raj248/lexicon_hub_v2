@@ -1,3 +1,4 @@
+// chrome://inspect/#devices
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { View, ActivityIndicator } from 'react-native';
@@ -93,6 +94,7 @@ export default function ChapterView({ filePath, baseDir: baseUrl, onLoad }: Chap
         }}
         injectedJavaScriptBeforeContentLoaded={injectedJS}
         source={{
+          // uri: fileUri,
           html,
           baseUrl: `file://${baseUrl}/OEBPS/Text/`,
           headers: { 'Content-Type': 'application/xhtml+xml; charset=UTF-8' },

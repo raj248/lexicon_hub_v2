@@ -18,7 +18,7 @@ export const injectedJS = `(function () {
   if (!styleEl) {
     styleEl = document.createElement('style');
     styleEl.id = STYLE_ID;
-    (document.head || document.documentElement).appendChild(styleEl);
+    (document.head || document.documentElement)?.appendChild(styleEl);
   }
 
   function setInjectedCSS(cssText) {
@@ -214,6 +214,17 @@ document.addEventListener('touchstart', onTouchStart, { passive: true });
 // document.addEventListener('touchmove', onTouchMove, { passive: false });
 document.addEventListener('touchend', onTouchEnd, { passive: false });
 
+
+  // ---- Link click delegation ----  
+  document.addEventListener('click', function(e) {
+    const target = e.target.closest('a'); // works even if child of <a>
+    if (target && target.href) {
+      e.preventDefault(); // stop default navigation
+      window.ReactNativeWebView.postMessage(
+        JSON.stringify({ type: 'link-click', href: target.href })
+      );
+    }
+  }, true); // use capture to catch before default
 
   // ---- Listen for messages from RN to update styles / jump to id / control gestures ----
   function handleMessageFromRN(event) {
