@@ -221,6 +221,15 @@ export default function Library() {
       <Text>{books.length} books found</Text>
       {books.length === 0 && <Text variant={'body'}>No books found</Text>}
       <Button
+        title="Web Reader"
+        onPress={() => {
+          router.push({
+            pathname: '/three',
+            params: { bookId: '9798855406993' },
+          });
+        }}
+      />
+      <Button
         title="Begin"
         onPress={() => {
           handleBegin();
@@ -279,15 +288,6 @@ export default function Library() {
         onPress={() => {
           router.push({
             pathname: '/page',
-            params: { bookId: '9798855406993' },
-          });
-        }}
-      />
-      <Button
-        title="Web Reader"
-        onPress={() => {
-          router.push({
-            pathname: '/three',
             params: { bookId: '9798855406993' },
           });
         }}

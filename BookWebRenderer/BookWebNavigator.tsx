@@ -18,7 +18,7 @@ import BookWebPager from './BookWebPager';
 const Drawer = createDrawerNavigator();
 
 export default function BookWebNavigator({ bookPath }: { bookPath: string }) {
-  const [selectedChapter, setSelectedChapter] = useState(0);
+  const [selectedChapter, setSelectedChapter] = useState(12);
   const [bookData, setBookData] = useState<OPFData | null>(null);
 
   useEffect(() => {

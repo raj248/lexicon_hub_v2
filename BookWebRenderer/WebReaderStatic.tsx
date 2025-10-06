@@ -1,12 +1,14 @@
 // chrome://inspect/#devices
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, useWindowDimensions } from 'react-native';
 import WebView from 'react-native-webview';
 import * as FileSystem from 'expo-file-system';
 import { injectedJS } from '~/utils/JSInjection';
 import { parseOPFFromBook, prepareChapter } from '~/modules/FileUtil';
 import { OPFData } from '~/epub-core/types';
+import { darkTheme, lightTheme } from '~/theme/theme';
+import { useColorScheme } from '~/lib/useColorScheme';
 
 type ChapterViewProps = {
   bookPath: string; // absolute path to book
@@ -17,13 +19,43 @@ type ChapterViewProps = {
 
 function makeInjectedCSS(theme: any, fontSize = 16, lineHeight = 1.45) {
   return `
-    html, body { background: ${theme.background}; color: ${theme.onBackground}; margin: 0; padding: 0; -webkit-text-size-adjust: none; }
-    body { font-family: 'System'; font-size: ${fontSize}px; line-height: ${lineHeight}; padding: 16px; }
-    img { max-width: 100%; height: auto; display: block; margin: 8px auto; }
+    html, body {
+      background: ${theme.background};
+      color: ${theme.foreground};
+      margin: 0;
+      padding: 0;
+      font-size: "100%";
+      -webkit-text-size-adjust: none;
+    }
+
+    body {
+      font-family: 'System';
+      font-size: ${fontSize}px;
+      line-height: ${lineHeight};
+      padding: 16px;
+    }
+
+    img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 8px auto;
+    }
+
     p { margin-bottom: 1rem; }
-    h1,h2,h3 { margin: 1rem 0; }
-    pre, code { white-space: pre-wrap; word-break: break-word; }
-    /* add other rules you need */
+
+    h1, h2, h3 { margin: 1rem 0; }
+
+    pre, code {
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    a {
+      all: unset;
+      font-weight: 600;
+      cursor: pointer;
+    }
   `;
 }
 
@@ -34,46 +66,63 @@ export default function ChapterView({
 
   onLoad,
 }: ChapterViewProps) {
+  const { colors } = useColorScheme();
+  const { width, height } = useWindowDimensions();
   const webviewRef = useRef<WebView>(null);
   const [bookData, setBookData] = useState<OPFData | null>(null);
   const [html, setHtml] = useState<string | null>(null);
   const [filePath, setFilePath] = useState<string | null>(null);
   let lastSwipeTime = 0;
 
-  const handleMessage = useCallback((event: { nativeEvent: { data: any } }) => {
-    try {
-      const data = JSON.parse(event.nativeEvent.data);
-      switch (data.type) {
-        case 'imageClick':
-          console.log('imageClick', data);
-          // onImageTap && onImageTap(data);
-          break;
-        case 'progress':
-          console.log('progress', data);
-          // onProgress && onProgress(data);
-          break;
+  const minFont = 16;
+  const maxFont = 72;
+  const currentFontSize = 36;
+  const slope = Math.min(width, height) / Math.max(width, height);
 
-        case 'swipe-end':
-          console.log('lastSwipeTime', lastSwipeTime);
-          const now = Date.now();
-          if (now - lastSwipeTime < 500) return; // ignore rapid swipes
-          lastSwipeTime = now;
-          setIndex((prev: number) => (data.direction === 'left' ? prev + 1 : prev - 1));
-          break;
+  const fontSize = slope * currentFontSize;
 
-        case 'bridgeReady':
-          // send initial styles
-          // const css = cssOverride || ''; // build your CSS string
-          console.log('bridgeReady', data);
-          // webviewRef.current?.injectJavaScript(`window.postMessage(${JSON.stringify(JSON.stringify({type:'setStyles',css}))}); true;`);
-          break;
-        default:
-          console.warn('Unknown message from webview', data);
+  const handleMessage = useCallback(
+    (event: { nativeEvent: { data: any } }) => {
+      try {
+        const data = JSON.parse(event.nativeEvent.data);
+        console.log('fontSize', fontSize, width, height);
+
+        switch (data.type) {
+          case 'imageClick':
+            console.log('imageClick', data);
+            // onImageTap && onImageTap(data);
+            break;
+          case 'progress':
+            console.log('progress', data);
+            // onProgress && onProgress(data);
+            break;
+
+          case 'swipe-end':
+            console.log('lastSwipeTime', lastSwipeTime);
+            const now = Date.now();
+            if (now - lastSwipeTime < 500) return; // ignore rapid swipes
+            lastSwipeTime = now;
+            setIndex((prev: number) => (data.direction === 'left' ? prev + 1 : prev - 1));
+            break;
+
+          case 'bridgeReady':
+            console.log('bridgeReady', data);
+            webviewRef.current?.postMessage(
+              JSON.stringify({
+                type: 'setStyles',
+                css: makeInjectedCSS(colors, 24, 4),
+              })
+            );
+            break;
+          default:
+            console.warn('Unknown message from webview', data);
+        }
+      } catch (e) {
+        console.warn('Invalid message from webview', e);
       }
-    } catch (e) {
-      console.warn('Invalid message from webview', e);
-    }
-  }, []);
+    },
+    [fontSize]
+  );
 
   useEffect(() => {
     if (!bookPath) {
@@ -134,6 +183,7 @@ export default function ChapterView({
         onHttpError={(event) => {
           console.log('onHttpError', event);
         }}
+        textZoom={100}
         allowFileAccess={true} // necessary for local files
         allowFileAccessFromFileURLs={true} // necessary for local files
         allowUniversalAccessFromFileURLs={true} // necessary for local files

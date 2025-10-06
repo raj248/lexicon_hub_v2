@@ -13,16 +13,19 @@ export const injectedJS = `(function () {
   }
 
   // ---- Inject a <style> element for dynamic styles ----
-  const STYLE_ID = 'rn-injected-style';
-  let styleEl = document.getElementById(STYLE_ID);
-  if (!styleEl) {
-    styleEl = document.createElement('style');
-    styleEl.id = STYLE_ID;
-    (document.head || document.documentElement)?.appendChild(styleEl);
-  }
-
+  
+  console.log("Hello")
   function setInjectedCSS(cssText) {
-    styleEl.textContent = cssText || '';
+    const STYLE_ID = 'rn-injected-style';
+    let styleEl = document.getElementById(STYLE_ID);
+    if (!styleEl) {
+      styleEl = document.createElement('style');
+      styleEl.id = STYLE_ID;
+      (window.document.head || window.document.documentElement)?.appendChild(styleEl);
+      styleEl.textContent = cssText || '';
+    }
+    console.log("Setting css: ", cssText)
+    console.log(window.document.head)
   }
 
   // ---- Utility to ensure elements have IDs ----
@@ -240,6 +243,7 @@ document.addEventListener('touchend', onTouchEnd, { passive: false });
       switch (obj.type) {
         case 'setStyles':
           setInjectedCSS(obj.css || '');
+          post({"setStyles": true});
           // force reflow if needed
           maybeReportProgress();
           break;
@@ -266,7 +270,7 @@ document.addEventListener('touchend', onTouchEnd, { passive: false });
   }
 
   // older RN WebView maps to window.document; we add multiple hooks:
-  window.addEventListener('message', handleMessageFromRN);
+  window.document.addEventListener('message', handleMessageFromRN);
   // some RN wrappers also call window.postMessage directly
   const origPost = window.postMessage;
   window.postMessage = function () {
