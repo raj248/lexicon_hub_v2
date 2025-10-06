@@ -416,11 +416,11 @@ class FileUtilModule : Module() {
             val cachedChapterFile = File(cacheDir, chapterHref)
 
             // ✅ Early return if chapter is already cached
-            if (cachedChapterFile.exists()) {
-                Log.d("FileUtil", "Chapter is already cached: ${cachedChapterFile.absolutePath}")
-                promise.resolve(cachedChapterFile.absolutePath)
-                return@AsyncFunction
-            }
+            // if (cachedChapterFile.exists()) {
+            //     Log.d("FileUtil", "Chapter is already cached: ${cachedChapterFile.absolutePath}")
+            //     promise.resolve(cachedChapterFile.absolutePath)
+            //     return@AsyncFunction
+            // }
 
             // Otherwise, extract from zip
             val zipFile = ZipFile(epubPath)
@@ -455,15 +455,19 @@ class FileUtilModule : Module() {
 
             // --- Handle CSS ---
             doc.select("link[rel=stylesheet]").forEach { link ->
+                Log.d("FileUtil", "link: $link")
                 val href = link.attr("href")
                 if (href.isNotEmpty()) {
-                    val resourceZipPath = File(chapterHref).parent + "/" + href
+                    val chapterDir = File(chapterHref).parent
+                    val resourceZipPath = File(chapterDir, href).normalize().path
                     val resourceEntry = zipFile.getEntry(resourceZipPath)
+                    Log.d("FileUtil", "resourceZipPath: $resourceZipPath")
                     if (resourceEntry != null) {
                         val resourceBytes = zipFile.getInputStream(resourceEntry).readBytes()
                         val targetFile = File(cacheDir, resourceZipPath)
                         targetFile.parentFile?.mkdirs()
                         targetFile.writeBytes(resourceBytes)
+                        Log.d("FileUtil", "targetFile: $targetFile")
                         link.attr("href", "file://${targetFile.absolutePath}")
                     }
                 }

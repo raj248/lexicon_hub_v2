@@ -81,9 +81,9 @@ export default function BookPager({ bookPath, chapters, initialIndex = 0 }: Book
         ref={pagerRef}
         style={{ flex: 1 }}
         initialPage={initialIndex}
-        onPageScroll={(event) => {
-          console.log('onPageScroll', event);
-        }}
+        // onPageScroll={(event) => {
+        //   console.log('onPageScroll', event);
+        // }}
         // onPageScrollStateChanged={(event) => {
         //   console.log('onPageScrollStateChanged', event);
         // }}
