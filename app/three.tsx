@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Book, useBookStore } from '~/store/bookStore';
 import { parseOPFFromBook, prepareChapter } from '~/modules/FileUtil';
 import { Stack, useLocalSearchParams } from 'expo-router';
-import BookWebNavigator from '~/BookRenderer/BookWebNavigator';
+import BookWebNavigator from '~/BookWebRenderer/BookWebNavigator';
 
 export default function Three() {
   const [book, setBook] = useState<Book | null>(null);
@@ -17,10 +17,10 @@ export default function Three() {
     if (!bookId) return;
     const tempBook = useBookStore
       .getState()
-      .getBook('https://novelbin.com/b/my-vampire-system#tab-chapters-title');
-    // .getBook('9780136885979');
-    // .getBook('9781718500778');
-    // .getBook('9798855406993');
+      // .getBook('https://novelbin.com/b/my-vampire-system#tab-chapters-title');
+      // .getBook('9780136885979');
+      // .getBook('9781718500778');
+      .getBook('9798855406993');
     //   .getBook(bookId as string);
     if (tempBook) {
       setBook(tempBook);

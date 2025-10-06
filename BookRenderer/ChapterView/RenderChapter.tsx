@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Text } from './nativewindui/Text';
+import { Text } from '../../components/nativewindui/Text';
 import { Dimensions, View, ActivityIndicator, ScrollView, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import RenderHtml from 'react-native-render-html';

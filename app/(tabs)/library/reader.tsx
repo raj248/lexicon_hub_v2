@@ -3,7 +3,7 @@ import { View, Text } from 'react-native';
 import { useEffect, useState } from 'react';
 import { Book, useBookStore } from '~/store/bookStore';
 import { parseOPFFromBook, prepareChapter } from '~/modules/FileUtil';
-import ChapterView from '~/components/RenderChapter';
+import ChapterView from '~/BookRenderer/ChapterView/RenderChapter';
 
 export default function Reader() {
   const [book, setBook] = useState<Book | null>(null);

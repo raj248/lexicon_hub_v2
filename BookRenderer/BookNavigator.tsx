@@ -5,7 +5,6 @@ import {
 } from '@react-navigation/drawer';
 import { useEffect, useState } from 'react';
 import BookPager from './BookPager';
-// import BookPager from './BookPagerWindow';
 import { parseOPFFromBook } from '~/modules/FileUtil';
 import { OPFData } from '~/epub-core/types';
 
@@ -29,24 +28,25 @@ export default function BookNavigator({ bookPath }: { bookPath: string }) {
     <Drawer.Navigator
       initialRouteName="Book"
       screenOptions={{
-        drawerType: 'slide',
+        drawerType: 'back',
         drawerPosition: 'right',
         headerShown: false,
       }}
-      drawerContent={(props) => (
-        <DrawerContentScrollView {...props}>
-          {bookData?.spine.map((ch, index) => (
-            <DrawerItem
-              key={index}
-              label={`Chapter ${index + 1}`}
-              onPress={() => {
-                setSelectedChapter(index);
-                props.navigation.closeDrawer(); // close drawer after selecting
-              }}
-            />
-          ))}
-        </DrawerContentScrollView>
-      )}>
+      // drawerContent={(props) => (
+      //   <DrawerContentScrollView {...props}>
+      //     {bookData?.spine.map((ch, index) => (
+      //       <DrawerItem
+      //         key={index}
+      //         label={`Chapter ${index + 1}`}
+      //         onPress={() => {
+      //           setSelectedChapter(index);
+      //           props.navigation.closeDrawer(); // close drawer after selecting
+      //         }}
+      //       />
+      //     ))}
+      //   </DrawerContentScrollView>
+      // )}
+    >
       <Drawer.Screen name="Book">
         {(props) => (
           <BookPager

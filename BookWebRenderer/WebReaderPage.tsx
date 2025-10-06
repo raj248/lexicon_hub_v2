@@ -1,0 +1,128 @@
+// chrome://inspect/#devices
+'use client';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { View, ActivityIndicator } from 'react-native';
+import WebView from 'react-native-webview';
+import * as FileSystem from 'expo-file-system';
+import { injectedJS } from '~/utils/JSInjection';
+import { parseOPFFromBook, prepareChapter } from '~/modules/FileUtil';
+import { OPFData } from '~/epub-core/types';
+
+type ChapterViewProps = {
+  bookPath: string; // absolute path to book
+  filePath: string;
+  onLoad?: () => void;
+};
+
+function makeInjectedCSS(theme: any, fontSize = 16, lineHeight = 1.45) {
+  return `
+    html, body { background: ${theme.background}; color: ${theme.onBackground}; margin: 0; padding: 0; -webkit-text-size-adjust: none; }
+    body { font-family: 'System'; font-size: ${fontSize}px; line-height: ${lineHeight}; padding: 16px; }
+    img { max-width: 100%; height: auto; display: block; margin: 8px auto; }
+    p { margin-bottom: 1rem; }
+    h1,h2,h3 { margin: 1rem 0; }
+    pre, code { white-space: pre-wrap; word-break: break-word; }
+    /* add other rules you need */
+  `;
+}
+
+export default function ChapterWebView({ bookPath, filePath, onLoad }: ChapterViewProps) {
+  const webviewRef = useRef<WebView>(null);
+  const [html, setHtml] = useState<string | null>(null);
+  let lastSwipeTime = 0;
+
+  const handleMessage = useCallback((event: { nativeEvent: { data: any } }) => {
+    try {
+      const data = JSON.parse(event.nativeEvent.data);
+      switch (data.type) {
+        case 'imageClick':
+          console.log('imageClick', data);
+          // onImageTap && onImageTap(data);
+          break;
+        case 'progress':
+          console.log('progress', data);
+          // onProgress && onProgress(data);
+          break;
+
+        case 'swipe-end':
+          console.log('lastSwipeTime', lastSwipeTime);
+          const now = Date.now();
+          if (now - lastSwipeTime < 500) return; // ignore rapid swipes
+          lastSwipeTime = now;
+          break;
+
+        case 'bridgeReady':
+          // send initial styles
+          // const css = cssOverride || ''; // build your CSS string
+          console.log('bridgeReady', data);
+          // webviewRef.current?.injectJavaScript(`window.postMessage(${JSON.stringify(JSON.stringify({type:'setStyles',css}))}); true;`);
+          break;
+        default:
+          console.warn('Unknown message from webview', data);
+      }
+    } catch (e) {
+      console.warn('Invalid message from webview', e);
+    }
+  }, []);
+
+  useEffect(() => {
+    const loadHtml = async () => {
+      console.log('Loading chapter: ', filePath ?? '');
+      try {
+        if (!filePath) return;
+        const chapterPath = await prepareChapter(bookPath, filePath);
+        const content = await FileSystem.readAsStringAsync(`file://${chapterPath}`);
+        setHtml(content);
+      } catch (e) {
+        console.error('Failed to load chapter HTML', e);
+      } finally {
+        console.log('Chapter loaded');
+      }
+    };
+    loadHtml();
+  }, [filePath]);
+
+  console.warn('Re-render');
+
+  if (!html) return null;
+  if (!filePath) return null;
+  if (!bookPath) return null;
+
+  return (
+    <View style={{ flex: 1 }}>
+      <WebView
+        // ref={webviewRef}
+        // injectedJavaScriptBeforeContentLoaded={injectedJS}
+        source={{
+          html,
+        }}
+        onMessage={handleMessage}
+        menuItems={[{ key: '1', label: 'Coopy' }]}
+        onCustomMenuSelection={(event) => {
+          console.log('onCustomMenuSelection', event);
+        }}
+        onNavigationStateChange={(event) => {
+          console.log('onNavigationStateChange', event);
+        }}
+        onHttpError={(event) => {
+          console.log('onHttpError', event);
+        }}
+        allowFileAccess={true} // necessary for local files
+        allowFileAccessFromFileURLs={true} // necessary for local files
+        allowUniversalAccessFromFileURLs={true} // necessary for local files
+        javaScriptEnabled
+        domStorageEnabled
+        onLoad={() => onLoad?.()}
+        startInLoadingState
+        renderLoading={() => (
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <ActivityIndicator size="large" />
+          </View>
+        )}
+        onError={(error) => {
+          console.error('WebView error:', error);
+        }}
+      />
+    </View>
+  );
+}
