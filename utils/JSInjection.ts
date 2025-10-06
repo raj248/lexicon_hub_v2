@@ -152,7 +152,7 @@ let touchStartX = 0,
     touchStartTime = 0,
     isSwiping = false;
 
-const SWIPE_MIN_DISTANCE = Math.min(window.innerWidth * 0.12, 40); // px
+const SWIPE_MIN_DISTANCE = Math.min(window.innerWidth * 0.12, 100); // px
 const SWIPE_MAX_VERTICAL_DELTA = 80; // px
 const SWIPE_MAX_TIME = 600; // ms
 

@@ -41,16 +41,18 @@ export default function ChapterView({ filePath, baseDir: baseUrl, onLoad }: Chap
           console.log('progress', data);
           // onProgress && onProgress(data);
           break;
-        case 'swipe':
+        case 'swipe-end':
           console.log('swipe', data);
           // onSwipe && onSwipe(data.direction);
           break;
         case 'bridgeReady':
           // send initial styles
           // const css = cssOverride || ''; // build your CSS string
-
+          console.log('bridgeReady', data);
           // webviewRef.current?.injectJavaScript(`window.postMessage(${JSON.stringify(JSON.stringify({type:'setStyles',css}))}); true;`);
           break;
+        default:
+          console.warn('Unknown message from webview', data);
       }
     } catch (e) {
       console.warn('Invalid message from webview', e);
@@ -63,8 +65,9 @@ export default function ChapterView({ filePath, baseDir: baseUrl, onLoad }: Chap
         if (!filePath) return;
         const content = await FileSystem.readAsStringAsync(`file://${filePath}`);
         setHtml(content);
-        console.log('Chapter: ', content.slice(0, 600));
-        console.log(baseUrl);
+        // console.log('Chapter: ', content.slice(0, 600));
+        // console.log(baseUrl);
+        console.log('fileUri', fileUri);
       } catch (e) {
         console.error('Failed to load chapter HTML', e);
       }
@@ -73,31 +76,23 @@ export default function ChapterView({ filePath, baseDir: baseUrl, onLoad }: Chap
     loadHtml();
   }, [filePath]);
 
-  console.log('fileUri', fileUri);
-
   if (!html) return null;
   if (!filePath) return null;
   return (
     <View style={{ flex: 1 }}>
       <WebView
         ref={webviewRef}
-        suppressMenuItems={[]}
+        injectedJavaScriptBeforeContentLoaded={injectedJS}
+        source={{
+          html,
+        }}
+        onMessage={handleMessage}
         menuItems={[{ key: '1', label: 'Coopy' }]}
         onCustomMenuSelection={(event) => {
           console.log('onCustomMenuSelection', event);
         }}
         onNavigationStateChange={(event) => {
           console.log('onNavigationStateChange', event);
-        }}
-        onMessage={(event) => {
-          console.log('onMessage', event);
-        }}
-        injectedJavaScriptBeforeContentLoaded={injectedJS}
-        source={{
-          // uri: fileUri,
-          html,
-          baseUrl: `file://${baseUrl}/OEBPS/Text/`,
-          headers: { 'Content-Type': 'application/xhtml+xml; charset=UTF-8' },
         }}
         onHttpError={(event) => {
           console.log('onHttpError', event);
