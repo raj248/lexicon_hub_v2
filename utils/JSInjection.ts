@@ -14,7 +14,6 @@ export const injectedJS = `(function () {
 
   // ---- Inject a <style> element for dynamic styles ----
   
-  console.log("Hello")
   function setInjectedCSS(cssText) {
     const STYLE_ID = 'rn-injected-style';
     let styleEl = document.getElementById(STYLE_ID);
@@ -23,13 +22,10 @@ export const injectedJS = `(function () {
       styleEl.id = STYLE_ID;
       (window.document.head || window.document.documentElement)?.appendChild(styleEl);
       styleEl.textContent = cssText || '';
-      console.log("Setting css: ", cssText)
       }
     else {
         styleEl.textContent = cssText || '';
-        console.log("updating css: ", cssText)
       }
-    console.log(window.document.head)
   }
 
   // ---- Utility to ensure elements have IDs ----
@@ -67,91 +63,109 @@ export const injectedJS = `(function () {
     true
   );
 
-  // ---- Read progress: use IntersectionObserver ----
-  // we'll observe headings + paragraphs, report the first element whose top is within threshold.
-  const progressSelectors = ['h1', 'h2', 'h3', 'p', 'section'];
-  ensureIdsForSelectors(progressSelectors);
 
-  const observed = Array.from(document.querySelectorAll(progressSelectors.join(',')));
-  const idToIndex = {};
-  observed.forEach((el, i) => {
-    if (el.id) idToIndex[el.id] = i;
-  });
+  // --- CONFIG ---
+const progressSelectors = ['h1', 'h2', 'h3', 'p', 'section'];
+const topThreshold = 0.2; // top 20% of viewport counts as topmost element
 
-  let lastReported = null;
-  const topThreshold = 0.2; // element's top within 20% of viewport height
 
-  function computeTopIndex() {
-    const vh = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
-    let firstInView = null;
+// --- INITIALIZATION ---
+ensureIdsForSelectors(progressSelectors);
+
+const observed = Array.from(document.querySelectorAll(progressSelectors.join(',')));
+const idToIndex = {};
+observed.forEach((el, i) => { if (el.id) idToIndex[el.id] = i; });
+
+let lastReported = null;
+let rafScheduled = false;
+
+// --- TOPMOST ELEMENT DETECTION ---
+function computeTopIndex() {
+  const vh = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+  let firstInView = null;
+
+  for (let i = 0; i < observed.length; i++) {
+    const el = observed[i];
+    if (!el) continue;
+    const r = el.getBoundingClientRect();
+
+    if (r.top >= 0 && r.top <= vh * topThreshold) {
+      firstInView = el;
+      break;
+    }
+    if (r.top < 0 && r.bottom > 0) {
+      firstInView = el;
+      break;
+    }
+  }
+
+  if (!firstInView) {
     for (let i = 0; i < observed.length; i++) {
       const el = observed[i];
-      if (!el) continue;
       const r = el.getBoundingClientRect();
-      // choose element whose top is nearest to top with threshold tolerance
-      if (r.top >= 0 && r.top <= vh * topThreshold) {
-        firstInView = el;
-        break;
-      }
-      // fallback: if top < 0 but bottom > 0 (partially visible)
-      if (r.top < 0 && r.bottom > 0) {
+      if (r.top >= 0) {
         firstInView = el;
         break;
       }
     }
-    if (!firstInView) {
-      // choose first element whose top > 0
-      for (let i = 0; i < observed.length; i++) {
-        const el = observed[i];
-        const r = el.getBoundingClientRect();
-        if (r.top >= 0) {
-          firstInView = el;
-          break;
-        }
-      }
-    }
-    if (firstInView) {
-      const id = firstInView.id || null;
-      const index = id ? idToIndex[id] : null;
-      const payload = {
-        type: 'progress',
-        id,
-        index,
-        top: Math.max(0, firstInView.getBoundingClientRect().top),
-      };
-      if (!lastReported || lastReported.id !== payload.id) {
-        post(payload);
-        lastReported = payload;
-      }
-    }
   }
 
-  // throttle using rAF
-  let rafScheduled = false;
-  function maybeReportProgress() {
-    if (rafScheduled) return;
-    rafScheduled = true;
-    requestAnimationFrame(() => {
-      try {
-        computeTopIndex();
-      } catch (e) {
-        /* ignore */
-      }
-      rafScheduled = false;
-    });
+  if (firstInView) {
+    const id = firstInView.id;
+    const index = idToIndex[id];
+    const payload = {
+      type: 'progress',
+      id,
+      index,
+      top: Math.max(0, firstInView.getBoundingClientRect().top),
+    };
+    if (!lastReported || lastReported.id !== payload.id) {
+      post(payload);
+      lastReported = payload;
+    }
   }
+}
 
-  // observe scroll and resize
-  window.addEventListener('scroll', maybeReportProgress, { passive: true });
-  window.addEventListener('resize', maybeReportProgress);
-  // initial report after DOM loaded
-  document.addEventListener('DOMContentLoaded', function () {
-    ensureIdsForSelectors(progressSelectors);
-    maybeReportProgress();
+// Throttle via rAF
+function maybeReportProgress() {
+  if (rafScheduled) return;
+  rafScheduled = true;
+  requestAnimationFrame(() => {
+    try { computeTopIndex(); } catch (e) { /* ignore */ }
+    rafScheduled = false;
   });
+}
 
-  // fallback periodic every 1000ms (in case scroll events missed)
-  setInterval(maybeReportProgress, 1000);
+// --- INTERSECTION OBSERVER ---
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    const id = entry.target.id;
+    if (entry.isIntersecting) {
+      post({ type: 'enter', id });
+      console.log("Element ", id, " entered viewport");
+    } else {
+      post({ type: 'exit', id });
+      console.log("Element", id ,"exited viewport");
+    }
+  });
+}, {
+  threshold: [0, 1.0]
+});
+
+// Attach observer
+observed.forEach(el => observer.observe(el));
+
+// --- EVENTS ---
+window.addEventListener('scroll', maybeReportProgress, { passive: true });
+window.addEventListener('resize', maybeReportProgress);
+document.addEventListener('DOMContentLoaded', () => {
+  ensureIdsForSelectors(progressSelectors);
+  maybeReportProgress();
+});
+
+// --- PERIODIC FALLBACK ---
+setInterval(maybeReportProgress, 1000);
+
 
 // ---- Gesture detection (lightweight) ----
 let touchStartX = 0,

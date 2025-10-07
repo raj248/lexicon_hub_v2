@@ -183,14 +183,17 @@ export default function ChapterView({
         }}
         onMessage={handleMessage}
         menuItems={[{ key: '1', label: 'Coopy' }]}
-        onCustomMenuSelection={(event) => {
-          console.log('onCustomMenuSelection', event);
+        onCustomMenuSelection={(webViewEvent) => {
+          console.log('onCustomMenuSelection', webViewEvent.nativeEvent);
         }}
         onNavigationStateChange={(event) => {
           // console.log('onNavigationStateChange', event);
         }}
-        onHttpError={(event) => {
-          console.log('onHttpError', event);
+        onHttpError={(webViewEvent) => {
+          console.log('onHttpError', webViewEvent);
+        }}
+        onLayout={(event) => {
+          console.log('onLayout', event.type);
         }}
         textZoom={100}
         allowFileAccess={true} // necessary for local files
