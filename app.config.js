@@ -38,6 +38,7 @@ export default {
       bundleIdentifier: 'com.hub.lexicon',
     },
     android: {
+      edgeToEdgeEnabled: true,
       adaptiveIcon: {
         foregroundImage: './assets/adaptive-icon/foreground.png',
         backgroundImage: './assets/adaptive-icon/background.png',
