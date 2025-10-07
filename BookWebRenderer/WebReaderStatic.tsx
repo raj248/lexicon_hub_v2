@@ -30,7 +30,7 @@ function makeInjectedCSS(theme: any, fontSize = 16, lineHeight = 1.45) {
 
     body {
       font-family: 'System';
-      font-size: ${fontSize}px;
+      font-size: ${fontSize}em;
       line-height: ${lineHeight};
       padding: 16px;
     }
@@ -74,55 +74,58 @@ export default function ChapterView({
   const [filePath, setFilePath] = useState<string | null>(null);
   let lastSwipeTime = 0;
 
-  const minFont = 16;
-  const maxFont = 72;
-  const currentFontSize = 36;
-  const slope = Math.min(width, height) / Math.max(width, height);
+  const orientation = width > height ? 'landscape' : 'portrait';
 
-  const fontSize = slope * currentFontSize;
+  const fontConstant = 2;
+  const fontSize = orientation === 'landscape' ? fontConstant * (height / width) : fontConstant;
 
-  const handleMessage = useCallback(
-    (event: { nativeEvent: { data: any } }) => {
-      try {
-        const data = JSON.parse(event.nativeEvent.data);
-        console.log('fontSize', fontSize, width, height);
+  useEffect(() => {
+    console.log('newFontSize', fontSize);
+    webviewRef.current?.postMessage(
+      JSON.stringify({
+        type: 'setStyles',
+        css: makeInjectedCSS(colors, fontSize, 4),
+      })
+    );
+  }, [orientation]);
 
-        switch (data.type) {
-          case 'imageClick':
-            console.log('imageClick', data);
-            // onImageTap && onImageTap(data);
-            break;
-          case 'progress':
-            console.log('progress', data);
-            // onProgress && onProgress(data);
-            break;
+  const handleMessage = useCallback((event: { nativeEvent: { data: any } }) => {
+    try {
+      const data = JSON.parse(event.nativeEvent.data);
+      switch (data.type) {
+        case 'imageClick':
+          console.log('imageClick', data);
+          // onImageTap && onImageTap(data);
+          break;
+        case 'progress':
+          console.log('progress', data);
+          // onProgress && onProgress(data);
+          break;
 
-          case 'swipe-end':
-            console.log('lastSwipeTime', lastSwipeTime);
-            const now = Date.now();
-            if (now - lastSwipeTime < 500) return; // ignore rapid swipes
-            lastSwipeTime = now;
-            setIndex((prev: number) => (data.direction === 'left' ? prev + 1 : prev - 1));
-            break;
+        case 'swipe-end':
+          console.log('lastSwipeTime', lastSwipeTime);
+          const now = Date.now();
+          if (now - lastSwipeTime < 500) return; // ignore rapid swipes
+          lastSwipeTime = now;
+          setIndex((prev: number) => (data.direction === 'left' ? prev + 1 : prev - 1));
+          break;
 
-          case 'bridgeReady':
-            console.log('bridgeReady', data);
-            webviewRef.current?.postMessage(
-              JSON.stringify({
-                type: 'setStyles',
-                css: makeInjectedCSS(colors, 24, 4),
-              })
-            );
-            break;
-          default:
-            console.warn('Unknown message from webview', data);
-        }
-      } catch (e) {
-        console.warn('Invalid message from webview', e);
+        case 'bridgeReady':
+          console.log('bridgeReady', data);
+          webviewRef.current?.postMessage(
+            JSON.stringify({
+              type: 'setStyles',
+              css: makeInjectedCSS(colors, fontSize, 4),
+            })
+          );
+          break;
+        default:
+          console.warn('Unknown message from webview', data);
       }
-    },
-    [fontSize]
-  );
+    } catch (e) {
+      console.warn('Invalid message from webview', e);
+    }
+  }, []);
 
   useEffect(() => {
     if (!bookPath) {
@@ -178,7 +181,7 @@ export default function ChapterView({
           console.log('onCustomMenuSelection', event);
         }}
         onNavigationStateChange={(event) => {
-          console.log('onNavigationStateChange', event);
+          // console.log('onNavigationStateChange', event);
         }}
         onHttpError={(event) => {
           console.log('onHttpError', event);

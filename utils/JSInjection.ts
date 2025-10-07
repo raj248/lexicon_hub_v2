@@ -23,8 +23,12 @@ export const injectedJS = `(function () {
       styleEl.id = STYLE_ID;
       (window.document.head || window.document.documentElement)?.appendChild(styleEl);
       styleEl.textContent = cssText || '';
-    }
-    console.log("Setting css: ", cssText)
+      console.log("Setting css: ", cssText)
+      }
+    else {
+        styleEl.textContent = cssText || '';
+        console.log("updating css: ", cssText)
+      }
     console.log(window.document.head)
   }
 
