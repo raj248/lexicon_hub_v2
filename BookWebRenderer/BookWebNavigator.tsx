@@ -14,6 +14,7 @@ import ChapterView from '~/BookWebRenderer/WebReaderStatic';
 import { LegendList, LegendListRef, LegendListRenderItemProps } from '@legendapp/list';
 import { FlatList } from 'react-native-gesture-handler';
 import BookWebPager from './BookWebPager';
+import React from 'react';
 
 const Drawer = createDrawerNavigator();
 
@@ -28,6 +29,7 @@ export default function BookWebNavigator({ bookPath }: { bookPath: string }) {
       console.log('Parsed book data: ', result?.metadata);
     });
   }, [bookPath]);
+  const MemoChapterView = React.memo(ChapterView);
 
   if (!bookPath) return null;
 
@@ -35,7 +37,7 @@ export default function BookWebNavigator({ bookPath }: { bookPath: string }) {
     <Drawer.Navigator
       initialRouteName="Book"
       screenOptions={{
-        drawerType: 'slide',
+        drawerType: 'front',
         drawerPosition: 'right',
         headerShown: false,
       }}
@@ -99,7 +101,11 @@ export default function BookWebNavigator({ bookPath }: { bookPath: string }) {
     >
       <Drawer.Screen name="Book">
         {(props) => (
-          <ChapterView bookPath={bookPath} index={selectedChapter} setIndex={setSelectedChapter} />
+          <MemoChapterView
+            bookPath={bookPath}
+            index={selectedChapter}
+            setIndex={setSelectedChapter}
+          />
           // <BookWebPager
           //   bookPath={bookPath}
           //   chapters={bookData?.spine.map((ch) => ch.href) ?? []}
