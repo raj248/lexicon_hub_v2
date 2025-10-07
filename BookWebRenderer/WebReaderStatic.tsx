@@ -9,6 +9,7 @@ import { parseOPFFromBook, prepareChapter } from '~/modules/FileUtil';
 import { OPFData } from '~/epub-core/types';
 import { darkTheme, lightTheme } from '~/theme/theme';
 import { useColorScheme } from '~/lib/useColorScheme';
+import { loadingHTML } from '~/utils/loading';
 
 type ChapterViewProps = {
   bookPath: string; // absolute path to book
@@ -66,7 +67,7 @@ export default function ChapterView({
 
   onLoad,
 }: ChapterViewProps) {
-  const { colors } = useColorScheme();
+  const { colors, isDarkColorScheme } = useColorScheme();
   const { width, height } = useWindowDimensions();
   const webviewRef = useRef<WebView>(null);
   const [bookData, setBookData] = useState<OPFData | null>(null);
@@ -87,45 +88,49 @@ export default function ChapterView({
         css: makeInjectedCSS(colors, fontSize, 4),
       })
     );
-  }, [orientation]);
+  }, [orientation, isDarkColorScheme]);
 
-  const handleMessage = useCallback((event: { nativeEvent: { data: any } }) => {
-    try {
-      const data = JSON.parse(event.nativeEvent.data);
-      switch (data.type) {
-        case 'imageClick':
-          console.log('imageClick', data);
-          // onImageTap && onImageTap(data);
-          break;
-        case 'progress':
-          console.log('progress', data);
-          // onProgress && onProgress(data);
-          break;
+  const handleMessage = useCallback(
+    (event: { nativeEvent: { data: any } }) => {
+      try {
+        const data = JSON.parse(event.nativeEvent.data);
+        switch (data.type) {
+          case 'imageClick':
+            console.log('imageClick', data);
+            // onImageTap && onImageTap(data);
+            break;
+          case 'progress':
+            console.log('progress', data);
+            // onProgress && onProgress(data);
+            break;
 
-        case 'swipe-end':
-          console.log('lastSwipeTime', lastSwipeTime);
-          const now = Date.now();
-          if (now - lastSwipeTime < 500) return; // ignore rapid swipes
-          lastSwipeTime = now;
-          setIndex((prev: number) => (data.direction === 'left' ? prev + 1 : prev - 1));
-          break;
+          case 'swipe-end':
+            console.log('lastSwipeTime', lastSwipeTime);
+            const now = Date.now();
+            if (now - lastSwipeTime < 500) return; // ignore rapid swipes
+            setHtml(loadingHTML);
+            lastSwipeTime = now;
+            setIndex((prev: number) => (data.direction === 'left' ? prev + 1 : prev - 1));
+            break;
 
-        case 'bridgeReady':
-          console.log('bridgeReady', data);
-          webviewRef.current?.postMessage(
-            JSON.stringify({
-              type: 'setStyles',
-              css: makeInjectedCSS(colors, fontSize, 4),
-            })
-          );
-          break;
-        default:
-          console.warn('Unknown message from webview', data);
+          case 'bridgeReady':
+            console.log('bridgeReady', data);
+            webviewRef.current?.postMessage(
+              JSON.stringify({
+                type: 'setStyles',
+                css: makeInjectedCSS(colors, fontSize, 4),
+              })
+            );
+            break;
+          default:
+            console.warn('Unknown message from webview', data);
+        }
+      } catch (e) {
+        console.warn('Invalid message from webview', e);
       }
-    } catch (e) {
-      console.warn('Invalid message from webview', e);
-    }
-  }, []);
+    },
+    [isDarkColorScheme]
+  );
 
   useEffect(() => {
     if (!bookPath) {
@@ -170,6 +175,7 @@ export default function ChapterView({
   return (
     <View style={{ flex: 1 }}>
       <WebView
+        style={{ backgroundColor: 'transparent' }}
         ref={webviewRef}
         injectedJavaScriptBeforeContentLoaded={injectedJS}
         source={{
