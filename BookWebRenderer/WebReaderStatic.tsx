@@ -175,6 +175,7 @@ export default function ChapterView({
   return (
     <View style={{ flex: 1 }}>
       <WebView
+        androidLayerType="software"
         style={{ backgroundColor: 'transparent' }}
         ref={webviewRef}
         injectedJavaScriptBeforeContentLoaded={injectedJS}
