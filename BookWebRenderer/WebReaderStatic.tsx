@@ -175,7 +175,10 @@ export default function ChapterView({
   return (
     <View style={{ flex: 1 }}>
       <WebView
-        androidLayerType="software"
+        // androidLayerType="hardware"
+        automaticallyAdjustsScrollIndicatorInsets
+        renderToHardwareTextureAndroid
+        overScrollMode="never"
         style={{ backgroundColor: 'transparent' }}
         ref={webviewRef}
         injectedJavaScriptBeforeContentLoaded={injectedJS}

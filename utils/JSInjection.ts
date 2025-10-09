@@ -64,107 +64,11 @@ export const injectedJS = `(function () {
   );
 
 
-  // --- CONFIG ---
-const progressSelectors = ['h1', 'h2', 'h3', 'p', 'section'];
-const topThreshold = 0.2; // top 20% of viewport counts as topmost element
-
+  const progressSelectors = ['h1', 'h2', 'h3', 'p', 'section'];
 
 // --- INITIALIZATION ---
 ensureIdsForSelectors(progressSelectors);
 
-const observed = Array.from(document.querySelectorAll(progressSelectors.join(',')));
-const idToIndex = {};
-observed.forEach((el, i) => { if (el.id) idToIndex[el.id] = i; });
-
-let lastReported = null;
-let rafScheduled = false;
-
-// --- TOPMOST ELEMENT DETECTION ---
-function computeTopIndex() {
-  const vh = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
-  let firstInView = null;
-
-  for (let i = 0; i < observed.length; i++) {
-    const el = observed[i];
-    if (!el) continue;
-    const r = el.getBoundingClientRect();
-
-    if (r.top >= 0 && r.top <= vh * topThreshold) {
-      firstInView = el;
-      break;
-    }
-    if (r.top < 0 && r.bottom > 0) {
-      firstInView = el;
-      break;
-    }
-  }
-
-  if (!firstInView) {
-    for (let i = 0; i < observed.length; i++) {
-      const el = observed[i];
-      const r = el.getBoundingClientRect();
-      if (r.top >= 0) {
-        firstInView = el;
-        break;
-      }
-    }
-  }
-
-  if (firstInView) {
-    const id = firstInView.id;
-    const index = idToIndex[id];
-    const payload = {
-      type: 'progress',
-      id,
-      index,
-      top: Math.max(0, firstInView.getBoundingClientRect().top),
-    };
-    if (!lastReported || lastReported.id !== payload.id) {
-      post(payload);
-      lastReported = payload;
-    }
-  }
-}
-
-// Throttle via rAF
-function maybeReportProgress() {
-  if (rafScheduled) return;
-  rafScheduled = true;
-  requestAnimationFrame(() => {
-    try { computeTopIndex(); } catch (e) { /* ignore */ }
-    rafScheduled = false;
-  });
-}
-
-// --- INTERSECTION OBSERVER ---
-const observer = new IntersectionObserver(entries => {
-  entries.forEach(entry => {
-    const id = entry.target.id;
-    if (entry.isIntersecting) {
-      post({ type: 'enter', id });
-      console.log("Element ", id, " entered viewport");
-    } else {
-      post({ type: 'exit', id });
-      console.log("Element", id ,"exited viewport");
-    }
-  });
-}, {
-  threshold: [0, 1.0]
-});
-
-// Attach observer
-observed.forEach(el => observer.observe(el));
-
-// --- EVENTS ---
-window.addEventListener('scroll', maybeReportProgress, { passive: true });
-window.addEventListener('resize', maybeReportProgress);
-document.addEventListener('DOMContentLoaded', () => {
-  ensureIdsForSelectors(progressSelectors);
-  maybeReportProgress();
-});
-
-// --- PERIODIC FALLBACK ---
-setInterval(maybeReportProgress, 1000);
 
 
 // ---- Gesture detection (lightweight) ----
@@ -263,20 +167,6 @@ document.addEventListener('touchend', onTouchEnd, { passive: false });
           setInjectedCSS(obj.css || '');
           post({"setStyles": true});
           // force reflow if needed
-          maybeReportProgress();
-          break;
-        case 'jumpToId':
-          if (obj.id) {
-            const el = document.getElementById(obj.id);
-            if (el) {
-              el.scrollIntoView({ behavior: obj.animated ? 'smooth' : 'auto', block: 'start' });
-              // report after scroll
-              setTimeout(maybeReportProgress, obj.animated ? 400 : 50);
-            }
-          }
-          break;
-        case 'getProgressNow':
-          maybeReportProgress();
           break;
         default:
           // unknown
