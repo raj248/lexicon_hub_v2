@@ -20,7 +20,6 @@ import { darkTheme, lightTheme } from '~/theme/theme';
 import { useTabBar } from '~/context/TabBarContext';
 import { FlashList as RNFlashList } from '@shopify/flash-list';
 import scanAndAddBooks from '~/utils/scanAndAddBooks';
-import { RequestStoragePermission } from '~/modules/FileUtil';
 import { Button } from 'react-native-paper';
 
 export const AnimatedFlashList = Animated.createAnimatedComponent(RNFlashList<any>);
@@ -45,7 +44,6 @@ const CoverImage = ({ uri }: { uri?: string }) => {
 export default function Library() {
   const { hide, show } = useTabBar();
   const navigation = useNavigation();
-  const [permission, setPermission] = useState<Boolean>(false);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
@@ -120,12 +118,6 @@ export default function Library() {
 
   const lastY = useSharedValue(0);
 
-  useEffect(() => {
-    async () => {
-      const granted = await RequestStoragePermission();
-      setPermission(granted);
-    };
-  }, []);
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
       // velocity not directly available on FlashList, so we check deltaY

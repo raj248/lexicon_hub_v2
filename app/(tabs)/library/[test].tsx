@@ -64,29 +64,19 @@ export default function Library() {
     [colors.card, router]
   );
   useEffect(() => {
-    FileUtil.RequestStoragePermission();
-    FileUtil.checkFilePermission().then((granted) => {
-      console.log('checkFilePermission', granted);
+    FileUtil.HasStoragePermission().then((granted) => {
+      console.log('hasStoragePermission', granted);
       if (granted) {
         FileUtil.ScanFiles().then((files) => {
           if (files) setBooks(files);
         });
       } else {
-        console.log('RequestStoragePermission');
-        FileUtil.RequestStoragePermission().then((granted) => {
-          console.log('RequestStoragePermission', granted);
-          if (granted) {
-            FileUtil.ScanFiles().then((files) => {
-              if (files) setBooks(files);
-            });
-          }
-        });
+        console.log('RequestStoragePermission', granted);
       }
     });
   }, []);
 
   const handleBegin = async () => {
-    FileUtil.RequestStoragePermission();
     FileUtil.ScanFiles().then((files) => {
       if (files) setBooks(files);
     });
@@ -151,7 +141,6 @@ export default function Library() {
   };
 
   const scan = () => {
-    FileUtil.RequestStoragePermission();
     scanAndAddBooks();
   };
 
@@ -170,7 +159,6 @@ export default function Library() {
   };
 
   const testModule = async () => {
-    FileUtil.RequestStoragePermission();
     const startTime = performance.now();
     const result = await FileUtil.parseOPFFromBook(books[0]);
     // books.map(async (book) => {

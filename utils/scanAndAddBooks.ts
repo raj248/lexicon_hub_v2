@@ -4,17 +4,33 @@ import {
   ScanFiles,
   parseOPFFromBook,
   extractCoverImage,
+  HasStoragePermission,
 } from '~/modules/FileUtil';
-import { parseOPF } from '~/epub-core/parsers/opfParserXml';
-import { findOpfPath } from '~/epub-core/parsers/containerParser';
+import { Alert } from 'react-native';
 
 export default async function scanAndAddBooks() {
   try {
-    const hasPermission = await RequestStoragePermission();
-    if (!hasPermission) {
-      console.log('Storage permission denied');
-      return;
-    }
+    HasStoragePermission().then((result) => {
+      console.log('HasStoragePermission', result);
+      if (!result) {
+        // alert to ask for permission
+        Alert.alert(
+          'Permission Required',
+          'Please grant storage permission to access your books.',
+          [
+            {
+              text: 'OK',
+              onPress: () => RequestStoragePermission(),
+            },
+            {
+              text: 'Cancel',
+              onPress: () => console.log('Storage permission denied'),
+              style: 'cancel',
+            },
+          ]
+        );
+      }
+    });
 
     const bookPaths = await ScanFiles();
     console.log('Found books:', bookPaths.length);

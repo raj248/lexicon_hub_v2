@@ -2,6 +2,7 @@ import { NativeModule, requireNativeModule } from 'expo';
 import { OPFData } from '~/epub-core/types';
 
 declare class FileUtilModule extends NativeModule {
+  HasStoragePermission(): Promise<boolean>;
   RequestStoragePermission(): Promise<boolean>;
   ScanFiles(): Promise<string[]>;
   readFileFromZip(zipFilePath: string, filePath: string, type: string): Promise<string>;

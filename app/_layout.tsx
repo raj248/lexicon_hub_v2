@@ -16,13 +16,34 @@ import { Provider as PaperProvider } from 'react-native-paper';
 import { Feather } from '@expo/vector-icons';
 import { darkTheme, lightTheme } from '~/theme/theme';
 import { useEffect } from 'react';
-import { RequestStoragePermission } from '~/modules/FileUtil';
+import { HasStoragePermission, RequestStoragePermission } from '~/modules/FileUtil';
+import { Alert } from 'react-native';
 
 export { ErrorBoundary } from 'expo-router';
 
 export default function RootLayout() {
   useEffect(() => {
-    RequestStoragePermission();
+    HasStoragePermission().then((result) => {
+      console.log('HasStoragePermission', result);
+      if (!result) {
+        // alert to ask for permission
+        Alert.alert(
+          'Permission Required',
+          'Please grant storage permission to access your books.',
+          [
+            {
+              text: 'OK',
+              onPress: () => RequestStoragePermission(),
+            },
+            {
+              text: 'Cancel',
+              onPress: () => console.log('Storage permission denied'),
+              style: 'cancel',
+            },
+          ]
+        );
+      }
+    });
   }, []);
 
   useInitialAndroidBarSync();

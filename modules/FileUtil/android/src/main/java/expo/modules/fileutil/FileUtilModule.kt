@@ -60,6 +60,28 @@ class FileUtilModule : Module() {
       }
     }
 
+    AsyncFunction("HasStoragePermission") { promise: Promise ->
+      val activity = appContext.currentActivity ?: run {
+        promise.reject("E_NO_ACTIVITY", "No current activity", null)
+        return@AsyncFunction
+      }
+
+      val granted = when {
+          Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> {
+              // Android 11+ check for All Files Access
+              Environment.isExternalStorageManager()
+          }
+          else -> {
+            // Older Android: check READ_EXTERNAL_STORAGE
+            ContextCompat.checkSelfPermission(
+                activity,
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            ) == PackageManager.PERMISSION_GRANTED
+          }       
+        }
+      promise.resolve(granted)
+    }
+
     AsyncFunction("ScanFiles") { promise: Promise ->
       val storageDir = Environment.getExternalStorageDirectory()
       val epubFiles = mutableListOf<String>()
