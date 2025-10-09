@@ -1,7 +1,7 @@
 // chrome://inspect/#devices
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { View, ActivityIndicator, useWindowDimensions } from 'react-native';
+import { View, ActivityIndicator, useWindowDimensions, StatusBar } from 'react-native';
 import WebView from 'react-native-webview';
 import * as FileSystem from 'expo-file-system';
 import { injectedJS } from '~/utils/JSInjection';
@@ -10,6 +10,7 @@ import { OPFData } from '~/epub-core/types';
 import { darkTheme, lightTheme } from '~/theme/theme';
 import { useColorScheme } from '~/lib/useColorScheme';
 import { loadingHTML } from '~/utils/loading';
+import { Stack } from 'expo-router';
 
 type ChapterViewProps = {
   bookPath: string; // absolute path to book
@@ -73,6 +74,15 @@ export default function ChapterView({
   const [bookData, setBookData] = useState<OPFData | null>(null);
   const [html, setHtml] = useState<string | null>(null);
   const [filePath, setFilePath] = useState<string | null>(null);
+  const [fullscreen, setFullscreen] = useState(false);
+
+  const toggleFullscreen = () => {
+    setFullscreen((prev) => !prev);
+    console.log('toggleFullscreen', fullscreen);
+    StatusBar.setHidden(!fullscreen, 'fade'); // hide/show status bar
+    // also hide/show bottom nav & header via your app state or context
+  };
+
   let lastSwipeTime = 0;
 
   const orientation = width > height ? 'landscape' : 'portrait';
@@ -103,6 +113,11 @@ export default function ChapterView({
             console.log('progress', data);
             // onProgress && onProgress(data);
             break;
+          case 'tap':
+            console.log('tap detected');
+            toggleFullscreen();
+            // onProgress && onProgress(data);
+            break;
 
           case 'swipe-end':
             console.log('lastSwipeTime', lastSwipeTime);
@@ -129,7 +144,7 @@ export default function ChapterView({
         console.warn('Invalid message from webview', e);
       }
     },
-    [isDarkColorScheme]
+    [isDarkColorScheme, fullscreen]
   );
 
   useEffect(() => {
@@ -174,6 +189,7 @@ export default function ChapterView({
 
   return (
     <View style={{ flex: 1 }}>
+      <Stack.Screen options={{ headerShown: !fullscreen, navigationBarHidden: !fullscreen }} />
       <WebView
         // androidLayerType="hardware"
         automaticallyAdjustsScrollIndicatorInsets

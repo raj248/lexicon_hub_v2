@@ -79,7 +79,7 @@ let touchStartX = 0,
 
 const SWIPE_MIN_DISTANCE = Math.min(window.innerWidth * 0.12, 100); // px
 const SWIPE_MAX_VERTICAL_DELTA = 80; // px
-const SWIPE_MAX_TIME = 600; // ms
+const SWIPE_MAX_TIME = 600; //
 
 function postSwipeProgress(dx) {
   // dx: positive = right, negative = left
@@ -127,9 +127,14 @@ function onTouchEnd(e) {
 
   if (dt <= SWIPE_MAX_TIME && dy < SWIPE_MAX_VERTICAL_DELTA && Math.abs(dx) >= SWIPE_MIN_DISTANCE) {
     const direction = dx < 0 ? 'left' : 'right';
+    console.log("Swipe Detected", direction)
     window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'swipe-end', direction }));
+  } else if (dt <= (SWIPE_MAX_TIME - 400) && dy < SWIPE_MAX_VERTICAL_DELTA && Math.abs(dx) < SWIPE_MIN_DISTANCE){
+    console.log("Tap Detected")
+    window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'tap' }));
   } else {
     // swipe cancelled
+    console.log("Swipe Cancelled")
     window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'swipe-cancel' }));
   }
 }

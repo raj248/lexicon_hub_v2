@@ -38,6 +38,7 @@ export default function Three() {
       <Stack.Screen
         options={{
           title: book?.title ?? 'E-Book',
+          headerShown: false,
         }}
       />
 
