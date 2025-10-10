@@ -4,6 +4,7 @@ import {
   DrawerContentComponentProps,
   DrawerItem,
 } from '@react-navigation/drawer';
+import { Text } from '~/components/nativewindui/Text';
 import { useEffect, useState } from 'react';
 import BookPager from '../BookRenderer/BookPager';
 // import BookPager from './BookPagerWindow';
@@ -15,6 +16,7 @@ import { LegendList, LegendListRef, LegendListRenderItemProps } from '@legendapp
 import { FlatList } from 'react-native-gesture-handler';
 import BookWebPager from './BookWebPager';
 import React from 'react';
+import BigList from 'react-native-big-list';
 
 const Drawer = createDrawerNavigator();
 
@@ -77,6 +79,31 @@ export default function BookWebNavigator({ bookPath }: { bookPath: string }) {
       //       ) : null}
       //     </DrawerContentScrollView>
       //   )}
+
+      drawerContent={(props) => (
+        <DrawerContentScrollView {...props}>
+          {bookData ? (
+            <BigList
+              data={bookData.spine}
+              itemHeight={50}
+              renderItem={({ item, index }) => (
+                // <DrawerItem
+                //   key={index}
+                //   focused={selectedChapter === index}
+                //   label={`Chapter ${index + 1}`}
+                //   onPress={() => {
+                //     setSelectedChapter(index);
+                //     props.navigation.closeDrawer();
+                //   }}
+                // />
+                <Text>{item.href}</Text>
+              )}
+              renderFooter={undefined}
+              renderHeader={undefined}
+            />
+          ) : null}
+        </DrawerContentScrollView>
+      )}
 
       // drawerContent={(props) => (
       //   <DrawerContentScrollView {...props}>
