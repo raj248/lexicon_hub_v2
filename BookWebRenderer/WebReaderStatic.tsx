@@ -215,6 +215,9 @@ export default function ChapterView({
         onLayout={(event) => {
           console.log('onLayout', event.type);
         }}
+        onLoadEnd={(event) => {
+          console.log('onLoadEnd: finished loading', event.type);
+        }}
         textZoom={100}
         allowFileAccess={true} // necessary for local files
         allowFileAccessFromFileURLs={true} // necessary for local files

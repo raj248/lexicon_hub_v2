@@ -16,9 +16,21 @@ import { LegendList, LegendListRef, LegendListRenderItemProps } from '@legendapp
 import { FlatList } from 'react-native-gesture-handler';
 import BookWebPager from './BookWebPager';
 import React from 'react';
-import BigList from 'react-native-big-list';
+import BigList, { BigListItem } from 'react-native-big-list';
+import { List } from 'react-native-paper';
 
 const Drawer = createDrawerNavigator();
+
+const renderItem = ({ item }: { item: any }) => {
+  return (
+    <List.Item
+      title={item.href}
+      // description={item.description}
+      // style={}
+      left={(props) => <List.Icon {...props} icon="box" />}
+    />
+  );
+};
 
 export default function BookWebNavigator({ bookPath }: { bookPath: string }) {
   const [selectedChapter, setSelectedChapter] = useState(12);
@@ -43,43 +55,6 @@ export default function BookWebNavigator({ bookPath }: { bookPath: string }) {
         drawerPosition: 'right',
         headerShown: false,
       }}
-      //   drawerContent={(props) => (
-      //     <DrawerContentScrollView {...props}>
-      //       {bookData?.spine.map((ch, index) => (
-      //         <DrawerItem
-      //           focused={selectedChapter === index}
-      //           key={index}
-      //           label={`Chapter ${index + 1}`}
-      //           onPress={() => {
-      //             setSelectedChapter(index);
-      //             props.navigation.closeDrawer(); // close drawer after selecting
-      //           }}
-      //         />
-      //       ))}
-      //     </DrawerContentScrollView>
-      //   )}
-
-      //   drawerContent={(props) => (
-      //     <DrawerContentScrollView {...props}>
-      //       {bookData ? (
-      //         <LegendList
-      //           data={bookData.spine}
-      //           renderItem={({ item, index }) => (
-      //             <DrawerItem
-      //               key={index}
-      //               focused={selectedChapter === index}
-      //               label={`Chapter ${index + 1}`}
-      //               onPress={() => {
-      //                 setSelectedChapter(index);
-      //                 props.navigation.closeDrawer();
-      //               }}
-      //             />
-      //           )}
-      //         />
-      //       ) : null}
-      //     </DrawerContentScrollView>
-      //   )}
-
       drawerContent={(props) => (
         <DrawerContentScrollView {...props}>
           {bookData ? (
@@ -96,36 +71,16 @@ export default function BookWebNavigator({ bookPath }: { bookPath: string }) {
                 //     props.navigation.closeDrawer();
                 //   }}
                 // />
+                // <BigListItem height={50} key={index} children={<Text>{item.href}</Text>} />
                 <Text>{item.href}</Text>
               )}
+              // renderItem={renderItem}
               renderFooter={undefined}
               renderHeader={undefined}
             />
           ) : null}
         </DrawerContentScrollView>
-      )}
-
-      // drawerContent={(props) => (
-      //   <DrawerContentScrollView {...props}>
-      //     {bookData ? (
-      //       <FlatList
-      //         data={bookData.spine}
-      //         renderItem={({ item, index }) => (
-      //           <DrawerItem
-      //             key={index}
-      //             focused={selectedChapter === index}
-      //             label={`Chapter ${index + 1}`}
-      //             onPress={() => {
-      //               setSelectedChapter(index);
-      //               props.navigation.closeDrawer();
-      //             }}
-      //           />
-      //         )}
-      //       />
-      //     ) : null}
-      //   </DrawerContentScrollView>
-      // )}
-    >
+      )}>
       <Drawer.Screen name="Book">
         {(props) => (
           <MemoChapterView
