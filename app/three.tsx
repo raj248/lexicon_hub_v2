@@ -17,10 +17,10 @@ export default function Three() {
     if (!bookId) return;
     const tempBook = useBookStore
       .getState()
-      .getBook('https://novelbin.com/b/my-vampire-system#tab-chapters-title');
-    // .getBook('9780136885979');
-    // .getBook('9781718500778');
-    // .getBook('9798855406993');
+      // .getBook('https://novelbin.com/b/my-vampire-system#tab-chapters-title');
+      // .getBook('9780136885979');
+      // .getBook('9781718500778');
+      .getBook('9798855406993');
     //   .getBook(bookId as string);
     if (tempBook) {
       setBook(tempBook);

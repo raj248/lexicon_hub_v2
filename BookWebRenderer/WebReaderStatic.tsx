@@ -193,6 +193,7 @@ export default function ChapterView({
       <WebView
         // androidLayerType="hardware"
         automaticallyAdjustsScrollIndicatorInsets
+        contentMode="mobile"
         renderToHardwareTextureAndroid
         overScrollMode="never"
         style={{ backgroundColor: 'transparent' }}

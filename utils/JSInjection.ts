@@ -17,13 +17,22 @@ export const injectedJS = `(function () {
   function setInjectedCSS(cssText) {
     const STYLE_ID = 'rn-injected-style';
     let styleEl = document.getElementById(STYLE_ID);
+  
+    const meta = document.createElement('meta');
+    meta.setAttribute('name', 'viewport');
+    meta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0');
+    document.getElementsByTagName('head')[0].appendChild(meta);
+
+    return;
     if (!styleEl) {
+      console.log("Applying Style")
       styleEl = document.createElement('style');
       styleEl.id = STYLE_ID;
       (window.document.head || window.document.documentElement)?.appendChild(styleEl);
       styleEl.textContent = cssText || '';
       }
     else {
+        console.log("Applying Style")
         styleEl.textContent = cssText || '';
       }
   }
