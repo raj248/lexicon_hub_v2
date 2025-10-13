@@ -26,16 +26,19 @@ function makeInjectedCSS(theme: any, fontSize = 16, lineHeight = 1.45) {
       color: ${theme.foreground};
       margin: 0;
       padding: 0;
-      font-size: "100%";
       -webkit-text-size-adjust: none;
     }
 
     body {
       font-family: 'System';
-      font-size: ${fontSize}em;
-      line-height: ${lineHeight};
+      font-size: ${fontSize}px;
+      // line-height: ${lineHeight};
       padding: 16px;
     }
+
+    p {
+        line-height: ${lineHeight}; /* Sets line height to 1.6 times the font size */
+      }
 
     img {
       max-width: 100%;
@@ -43,10 +46,6 @@ function makeInjectedCSS(theme: any, fontSize = 16, lineHeight = 1.45) {
       display: block;
       margin: 8px auto;
     }
-
-    p { margin-bottom: 1rem; }
-
-    h1, h2, h3 { margin: 1rem 0; }
 
     pre, code {
       white-space: pre-wrap;
@@ -87,8 +86,8 @@ export default function ChapterView({
 
   const orientation = width > height ? 'landscape' : 'portrait';
 
-  const fontConstant = 2;
-  const fontSize = orientation === 'landscape' ? fontConstant * (height / width) : fontConstant;
+  // const fontSize = orientation === 'landscape' ? fontConstant * (height / width) : fontConstant;
+  const fontSize = 14;
 
   useEffect(() => {
     console.log('newFontSize', fontSize);
@@ -133,7 +132,7 @@ export default function ChapterView({
             webviewRef.current?.postMessage(
               JSON.stringify({
                 type: 'setStyles',
-                css: makeInjectedCSS(colors, fontSize, 4),
+                css: makeInjectedCSS(colors, fontSize, 1.5),
               })
             );
             break;

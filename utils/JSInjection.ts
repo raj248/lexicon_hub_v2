@@ -23,7 +23,7 @@ export const injectedJS = `(function () {
     meta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0');
     document.getElementsByTagName('head')[0].appendChild(meta);
 
-    return;
+    // return;
     if (!styleEl) {
       console.log("Applying Style")
       styleEl = document.createElement('style');
