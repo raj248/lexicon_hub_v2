@@ -47,3 +47,4 @@
 - [ ] Search within book chapters
 - [ ] Annotation/highlight support
 - [ ] Reading stats (time spent, progress %)
+- [ ] CBZ Support
