@@ -561,6 +561,28 @@ class FileUtilModule : Module() {
       Events("onLoad")
     }
 
+  View(ChapterListView::class) {
+      // Defines a setter for the `chapters` prop.
+      // This prop accepts an array of objects from React Native.
+      Prop("chapters") { view: ChapterListView, chapters: List<Map<String, String>> ->
+          // We receive a list of maps and convert them into our ChapterLink data class.
+          val chapterLinks = chapters.mapNotNull {
+              val id = it["id"]
+              val title = it["title"]
+              if (id != null && title != null) {
+                  ChapterLink(id = id, title = title)
+              } else {
+                  null
+              }
+          }
+          // submitList is a high-performance way to update the RecyclerView's data.
+          view.chaptersAdapter.submitList(chapterLinks)
+      }
+
+      // Defines an event that the view can send to JavaScript.
+      // This name must match the EventDispatcher in ChapterListView.
+      Events("onChapterPress")
+  }
   }
 
   // --- Top-level function to parse TOC ---
