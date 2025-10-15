@@ -5,10 +5,10 @@ import {
   DrawerItem,
 } from '@react-navigation/drawer';
 import { Text } from '~/components/nativewindui/Text';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import BookPager from '../BookRenderer/BookPager';
 // import BookPager from './BookPagerWindow';
-import { parseOPFFromBook } from '~/modules/FileUtil';
+import { ChapterListView, parseOPFFromBook } from '~/modules/FileUtil';
 import { OPFData } from '~/epub-core/types';
 import ChapterView from '~/BookWebRenderer/WebReaderStatic';
 
@@ -45,8 +45,18 @@ export default function BookWebNavigator({ bookPath }: { bookPath: string }) {
   }, [bookPath]);
   const MemoChapterView = React.memo(ChapterView);
 
+  const chapters = useMemo(() => {
+    return (
+      bookData?.spine.map((ch) => ({
+        id: ch.id,
+        title: ch.href,
+      })) ?? []
+    );
+  }, [bookData]);
+
   if (!bookPath) return null;
 
+  console.log('Chapters: ', chapters);
   return (
     <Drawer.Navigator
       initialRouteName="Book"
@@ -56,30 +66,11 @@ export default function BookWebNavigator({ bookPath }: { bookPath: string }) {
         headerShown: false,
       }}
       drawerContent={(props) => (
-        <DrawerContentScrollView {...props}>
-          {bookData ? (
-            <BigList
-              data={bookData.spine}
-              itemHeight={50}
-              renderItem={({ item, index }) => (
-                // <DrawerItem
-                //   key={index}
-                //   focused={selectedChapter === index}
-                //   label={`Chapter ${index + 1}`}
-                //   onPress={() => {
-                //     setSelectedChapter(index);
-                //     props.navigation.closeDrawer();
-                //   }}
-                // />
-                // <BigListItem height={50} key={index} children={<Text>{item.href}</Text>} />
-                <Text>{item.href}</Text>
-              )}
-              // renderItem={renderItem}
-              renderFooter={undefined}
-              renderHeader={undefined}
-            />
-          ) : null}
-        </DrawerContentScrollView>
+        <ChapterListView
+          style={{ flex: 1 }}
+          chapters={chapters ?? []}
+          onChapterPress={(event: any) => console.log(event.nativeEvent)}
+        />
       )}>
       <Drawer.Screen name="Book">
         {(props) => (
