@@ -23,7 +23,6 @@ export default function Reader() {
       // .getBook('9798855406993');
       .getBook(bookId as string);
     if (tempBook) {
-      // console.log('Loading book: ', tempBook?.path);
       setBook(tempBook);
       // parseOPFFromBook(tempBook.path ?? '').then((result) => {
       //   result?.spine.map((chapter) => {
@@ -35,7 +34,6 @@ export default function Reader() {
       //   });
       // });
     }
-    // console.log('html');
   }, [bookId]);
 
   return (

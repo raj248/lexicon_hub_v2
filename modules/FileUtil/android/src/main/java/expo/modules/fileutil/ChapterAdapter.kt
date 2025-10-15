@@ -14,16 +14,37 @@ class ChaptersAdapter(
     private val onItemClicked: (ChapterLink) -> Unit
 ) : ListAdapter<ChapterLink, ChaptersAdapter.ChapterViewHolder>(ChapterDiffCallback()) {
 
-    // ViewHolder holds the views for a single item.
+    private var selectedChapterId: String? = null
+
+    fun selectChapter(chapterId: String) {
+        val oldSelected = selectedChapterId
+        selectedChapterId = chapterId
+
+        oldSelected?.let { oldId ->
+            val oldIndex = currentList.indexOfFirst { it.id == oldId }
+            if (oldIndex != -1) notifyItemChanged(oldIndex, "selection")
+        }
+
+        val newIndex = currentList.indexOfFirst { it.id == chapterId }
+        if (newIndex != -1) notifyItemChanged(newIndex, "selection")
+    }
+
     class ChapterViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val titleTextView: TextView = itemView.findViewById(R.id.chapterTitleTextView)
 
-        fun bind(chapter: ChapterLink, onItemClicked: (ChapterLink) -> Unit) {
+        fun bind(chapter: ChapterLink, isSelected: Boolean, onItemClicked: (ChapterLink) -> Unit) {
             titleTextView.text = chapter.title
-            itemView.setOnClickListener {
-                onItemClicked(chapter)
-            }
+            updateSelection(isSelected)
+            itemView.setOnClickListener { onItemClicked(chapter) }
         }
+
+        fun updateSelection(isSelected: Boolean) {
+            itemView.setBackgroundResource(
+                if (isSelected) android.R.color.holo_blue_light
+                else android.R.color.transparent
+            )
+        }
+
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChapterViewHolder {
@@ -32,8 +53,26 @@ class ChaptersAdapter(
         return ChapterViewHolder(view)
     }
 
+    // ✅ Must override this one
     override fun onBindViewHolder(holder: ChapterViewHolder, position: Int) {
-        holder.bind(getItem(position), onItemClicked)
+        val chapter = getItem(position)
+        val isSelected = chapter.id == selectedChapterId
+        holder.bind(chapter, isSelected, onItemClicked)
+    }
+
+    // ✅ This is optional, for payload-based updates
+    override fun onBindViewHolder(
+        holder: ChapterViewHolder,
+        position: Int,
+        payloads: MutableList<Any>
+    ) {
+        if (payloads.isEmpty()) {
+            onBindViewHolder(holder, position) // call default full bind
+        } else {
+            val chapter = getItem(position)
+            val isSelected = chapter.id == selectedChapterId
+            holder.updateSelection(isSelected)
+        }
     }
 }
 
@@ -41,7 +80,7 @@ class ChaptersAdapter(
 // needed to update the list, avoiding a full redraw.
 class ChapterDiffCallback : DiffUtil.ItemCallback<ChapterLink>() {
     override fun areItemsTheSame(oldItem: ChapterLink, newItem: ChapterLink): Boolean {
-        return oldItem.id == newItem.id
+        return oldItem.id == newItem.id 
     }
 
     override fun areContentsTheSame(oldItem: ChapterLink, newItem: ChapterLink): Boolean {

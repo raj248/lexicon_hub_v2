@@ -23,11 +23,6 @@ export default function ChapterListScreen() {
         chapters={chapters}
         onChapterPress={handleChapterPress}
       />
-      <FileUtilView
-        style={{ flex: 1 }}
-        url="https://www.google.com"
-        onLoad={(e) => console.log(e.nativeEvent)}
-      />
     </View>
   );
 }

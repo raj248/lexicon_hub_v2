@@ -15,12 +15,14 @@ class ChapterListView(context: Context, appContext: AppContext) : ExpoView(conte
     private val onChapterPress by EventDispatcher()
 
     // The adapter, which handles item clicks and calls our event dispatcher.
-    internal val chaptersAdapter = ChaptersAdapter { chapter ->
-        // When a chapter is clicked, send its data back to JS.
-        onChapterPress(mapOf(
-            "id" to chapter.id,
-            "title" to chapter.title
-        ))
+    internal val chaptersAdapter: ChaptersAdapter by lazy {
+        ChaptersAdapter { chapter ->
+            chaptersAdapter.selectChapter(chapter.id)
+            onChapterPress(mapOf(
+                "id" to chapter.id,
+                "title" to chapter.title
+            ))
+        }
     }
 
     // The actual native RecyclerView.
