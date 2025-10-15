@@ -90,3 +90,6 @@ export async function parseTOC(bookPath: string, tocHref: string): Promise<any[]
 }
 
 export { default as FileUtilView } from './src/FileUtilView';
+
+export { default as ChapterListView } from './src/ChapterListView';
+export type { ChapterLink } from './src/FileUtilModule.types';

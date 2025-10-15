@@ -63,9 +63,6 @@ export default function TabLayout() {
 
           animationEnabled: true,
           tabBarBounces: true,
-        }}
-        onTabSelect={({ index }) => {
-          console.log(index);
         }}>
         <Tabs.Screen
           name="index"

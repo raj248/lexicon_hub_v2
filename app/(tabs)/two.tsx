@@ -1,26 +1,46 @@
-import { Stack } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { View, StyleSheet, Text } from 'react-native';
+import { ChapterListView, FileUtilView } from '~/modules/FileUtil';
+export type Props = {
+  chapters: Array<{ id: string; title: string }>;
+  onChapterPress: (event: { nativeEvent: { id: string; title: string } }) => void;
+};
 
-import { FileUtilView } from '~/modules/FileUtil';
+export default function ChapterListScreen() {
+  const chapters = Array.from({ length: 2500 }, (_, i) => ({
+    id: `chapter_${i + 1}`,
+    title: `Chapter ${i + 1}: The Great Journey`,
+  }));
 
-export default function Home() {
+  const handleChapterPress = (event: any) => {
+    const { id, title } = event.nativeEvent;
+    console.log(`Pressed chapter: ${title} (ID: ${id})`);
+  };
+
   return (
-    <>
-      <Stack.Screen options={{ title: 'Tab Two' }} />
-      <View style={styles.container}>
-        <FileUtilView
-          url="file:///data/user/0/com.hub.lexicon/cache/I’m the Evil Lord of an Intergalactic Empire! - Volume 08/OEBPS/Text/CoverPage.html"
-          onLoad={() => console.log('loaded')}
-          style={{ flex: 1 }}
-        />
-      </View>
-    </>
+    <View style={styles.container}>
+      <ChapterListView
+        style={styles.list}
+        chapters={chapters}
+        onChapterPress={handleChapterPress}
+      />
+      <FileUtilView
+        style={{ flex: 1 }}
+        url="https://www.google.com"
+        onLoad={(e) => console.log(e.nativeEvent)}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
+  list: {
+    flex: 1,
+    width: '100%',
   },
 });

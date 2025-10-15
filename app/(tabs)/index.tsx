@@ -130,11 +130,9 @@ export default function Library() {
       if (diff < -5) {
         // scrolling up → show
         runOnJS(show)();
-        console.log('Showing');
       } else if (diff > 5) {
         // scrolling down → hide
         runOnJS(hide)();
-        console.log('Hiding');
       }
       lastY.value = y;
     },

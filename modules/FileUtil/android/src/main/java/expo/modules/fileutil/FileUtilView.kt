@@ -7,6 +7,8 @@ import expo.modules.kotlin.AppContext
 import expo.modules.kotlin.viewevent.EventDispatcher
 import expo.modules.kotlin.views.ExpoView
 
+import android.util.Log
+
 class FileUtilView(context: Context, appContext: AppContext) : ExpoView(context, appContext) {
   // Creates and initializes an event dispatcher for the `onLoad` event.
   // The name of the event is inferred from the value and needs to match the event name defined in the module.
@@ -25,6 +27,8 @@ class FileUtilView(context: Context, appContext: AppContext) : ExpoView(context,
 
   init {
     // Adds the WebView to the view hierarchy.
+    Log.d("FileUtil", "FileUtilView init")
+   
     addView(webView)
   }
 }

@@ -7,6 +7,8 @@ import expo.modules.kotlin.AppContext
 import expo.modules.kotlin.viewevent.EventDispatcher
 import expo.modules.kotlin.views.ExpoView
 
+import android.util.Log
+
 class ChapterListView(context: Context, appContext: AppContext) : ExpoView(context, appContext) {
     // Event dispatcher to send an event to JavaScript when a chapter is pressed.
     // The name 'onChapterPress' must match the event name in the module definition.
@@ -30,6 +32,7 @@ class ChapterListView(context: Context, appContext: AppContext) : ExpoView(conte
 
     init {
         // Add the RecyclerView to this view's hierarchy.
+        Log.d("FileUtil", "ChapterListView init")
         addView(recyclerView)
     }
 }

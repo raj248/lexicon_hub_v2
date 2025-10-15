@@ -24,7 +24,6 @@ export { ErrorBoundary } from 'expo-router';
 export default function RootLayout() {
   useEffect(() => {
     HasStoragePermission().then((result) => {
-      console.log('HasStoragePermission', result);
       if (!result) {
         // alert to ask for permission
         Alert.alert(
