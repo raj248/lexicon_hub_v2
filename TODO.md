@@ -41,6 +41,7 @@
 - [ ] Highlight current chapter (PARTIAL)
 - [ ] Tap to navigate to chapter
 - [ ] Customize ViewHolder
+- [ ] Add customization settings: Modal Chapter List
 
 ## 5. Optional / Future Enhancements
 

@@ -1,62 +1,22 @@
-import { createDrawerNavigator } from '@react-navigation/drawer';
-import { useEffect, useMemo, useState } from 'react';
-import { ChapterListView, parseOPFFromBook } from '~/modules/FileUtil';
-import { OPFData } from '~/epub-core/types';
-import ChapterView from '~/BookWebRenderer/WebReaderStatic';
+import * as React from 'react';
+import { Text } from 'react-native';
+import { Drawer } from 'react-native-drawer-layout';
+import { Button } from 'components/Button';
+export default function DrawerExample() {
+  const [open, setOpen] = React.useState(false);
 
-import React from 'react';
-
-const Drawer = createDrawerNavigator();
-
-export default function BookWebNavigator({ bookPath }: { bookPath: string }) {
-  const [selectedChapter, setSelectedChapter] = useState(12);
-  const [bookData, setBookData] = useState<OPFData | null>(null);
-
-  useEffect(() => {
-    if (!bookPath) return;
-    parseOPFFromBook(bookPath).then((result) => {
-      setBookData(result);
-      console.log('Parsed book data: ', result?.metadata);
-    });
-  }, [bookPath]);
-  const MemoChapterView = React.memo(ChapterView);
-
-  const chapters = useMemo(() => {
-    return (
-      bookData?.spine.map((ch) => ({
-        id: ch.id,
-        title: ch.href,
-      })) ?? []
-    );
-  }, [bookData]);
-
-  if (!bookPath) return null;
-
-  console.log('Chapters: ', chapters);
   return (
-    <Drawer.Navigator
-      initialRouteName="Book"
-      screenOptions={{
-        drawerType: 'front',
-        drawerPosition: 'right',
-        headerShown: false,
-      }}
-      drawerContent={(props) => (
-        <ChapterListView
-          style={{ flex: 1 }}
-          chapters={chapters ?? []}
-          onChapterPress={(event: any) => console.log(event.nativeEvent)}
-        />
-      )}>
-      <Drawer.Screen name="Book">
-        {(props) => (
-          <MemoChapterView
-            bookPath={bookPath}
-            index={selectedChapter}
-            setIndex={setSelectedChapter}
-          />
-        )}
-      </Drawer.Screen>
-    </Drawer.Navigator>
+    <Drawer
+      open={open}
+      onOpen={() => setOpen(true)}
+      onClose={() => setOpen(false)}
+      renderDrawerContent={() => {
+        return <Text>Drawer content</Text>;
+      }}>
+      <Button
+        onPress={() => setOpen((prevOpen) => !prevOpen)}
+        title={`${open ? 'Close' : 'Open'} drawer`}
+      />
+    </Drawer>
   );
 }

@@ -22,15 +22,20 @@ const NoRippleButton = ({ children, onPress, style }: any) => (
 
 export default function TabLayout() {
   const { colors, isDarkColorScheme } = useColorScheme();
+  const visibility = NavigationBar.useVisibility();
   useEffect(() => {
+    console.log('Hiding navigation bar...');
     NavigationBar.setVisibilityAsync('hidden'); // hide
     return () => {
+      console.log('Showing navigation bar...');
       NavigationBar.setVisibilityAsync('visible'); // restore on exit
     };
-  }, []);
+  }, [visibility]);
+
   return (
     <TabBarProvider>
       <Tabs
+        initialRouteName="two"
         tabBar={(props) => <AnimatedTabBar {...props} />}
         tabBarPosition="bottom"
         screenOptions={{

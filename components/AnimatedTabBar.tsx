@@ -15,7 +15,7 @@ export default function AnimatedTabBar(props: any) {
   // }));
 
   const animatedStyle = useAnimatedStyle(() => ({
-    height: withTiming(isVisible.value ? insets.bottom + 80 : 0, { duration: 250 }), // collapse height
+    height: withTiming(isVisible.value ? insets.bottom + 70 : 0, { duration: 250 }), // collapse height
   }));
 
   return (
