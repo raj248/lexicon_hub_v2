@@ -81,8 +81,6 @@ export default function ChapterView({
     // also hide/show bottom nav & header via your app state or context
   };
 
-  let lastSwipeTime = 0;
-
   const orientation = width > height ? 'landscape' : 'portrait';
 
   // const fontSize = orientation === 'landscape' ? fontConstant * (height / width) : fontConstant;
@@ -98,6 +96,7 @@ export default function ChapterView({
     );
   }, [orientation, isDarkColorScheme]);
 
+  let lastSwipeTime = 0;
   const handleMessage = useCallback(
     (event: { nativeEvent: { data: any } }) => {
       try {
@@ -189,7 +188,6 @@ export default function ChapterView({
     <View style={{ flex: 1 }}>
       <Stack.Screen options={{ headerShown: !fullscreen, navigationBarHidden: !fullscreen }} />
       <WebView
-        // androidLayerType="hardware"
         automaticallyAdjustsScrollIndicatorInsets
         contentMode="mobile"
         renderToHardwareTextureAndroid
