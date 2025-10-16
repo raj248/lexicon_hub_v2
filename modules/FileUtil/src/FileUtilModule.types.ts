@@ -25,5 +25,6 @@ export type ChapterListViewProps = {
 
 export type ChapterLink = {
   id: string;
+  href: string;
   title: string;
 };

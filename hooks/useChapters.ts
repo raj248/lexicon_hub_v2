@@ -4,6 +4,10 @@ import * as FileSystem from 'expo-file-system';
 import type { OPFData } from '~/epub-core/types';
 import { parseOPFFromBook } from '~/modules/FileUtil';
 
+// const spineHrefToIndex = Object.fromEntries(
+//   bookData.spine.map((item, i) => [item.href, i])
+// );
+
 async function fetchChapterHtml(bookPath: string, href: string): Promise<string> {
   const fullPath = `${bookPath}/${href}`;
   return await FileSystem.readAsStringAsync(fullPath);
@@ -28,8 +32,12 @@ export function useChapters(bookPath: string | null) {
     return bookData.spine.map((ch) => ({
       id: ch.id,
       href: ch.href,
-      //   title: ch.title || ch.href.split('/').pop() || 'Untitled',
     }));
+  }, [bookData]);
+
+  const spineHrefToIndex = useMemo(() => {
+    if (!bookData) return {};
+    return Object.fromEntries(bookData.spine.map((item, i) => [item.href, i]));
   }, [bookData]);
 
   // Load current chapter HTML

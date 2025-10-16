@@ -7,5 +7,6 @@ import android.os.Parcelable
 @Parcelize
 data class ChapterLink(
     val id: String,
+    val href: String,
     val title: String
 ) : Parcelable

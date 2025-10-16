@@ -168,15 +168,21 @@ export default function Library() {
 
     books.map((book) => {
       FileUtil.parseOPFFromBook(book).then((result) => {
-        console.log(
-          'result',
-          // result.metadata.title,
-          // result?.metadata.coverImage ?? result?.metadata.title + ' (no cover)'
-          result?.baseDir,
-          result?.metadata.title
-          // result?.metadata.toc,
-          // result?.metadata.identifier
-        );
+        // console.log(
+        //   'result',
+        //   // result.metadata.title,
+        //   // result?.metadata.coverImage ?? result?.metadata.title + ' (no cover)'
+        //   // result?.baseDir,
+        //   result?.metadata.title,
+        //   // result?.spine
+        //   result?.metadata.identifier
+        // );
+        if (result?.metadata.identifier === '9781718375772') {
+          console.log('spine', result?.spine);
+          FileUtil.parseTOC(book, result?.metadata.toc ?? '').then((toc) => {
+            console.log('toc', toc);
+          });
+        }
         // console.log('result', result?.spine);
       });
     });

@@ -43,11 +43,11 @@ export default function BookWebNavigator({ bookPath }: { bookPath: string }) {
     });
   }, [bookPath]);
   const MemoChapterView = React.memo(ChapterView);
-
   const chapters = useMemo(() => {
     return (
       bookData?.spine.map((ch) => ({
         id: ch.id,
+        href: ch.href,
         title: ch.href,
       })) ?? []
     );
