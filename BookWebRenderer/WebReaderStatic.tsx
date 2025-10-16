@@ -7,7 +7,6 @@ import * as FileSystem from 'expo-file-system';
 import { injectedJS } from '~/utils/JSInjection';
 import { parseOPFFromBook, prepareChapter } from '~/modules/FileUtil';
 import { OPFData } from '~/epub-core/types';
-import { darkTheme, lightTheme } from '~/theme/theme';
 import { useColorScheme } from '~/lib/useColorScheme';
 import { loadingHTML } from '~/utils/loading';
 import { Stack } from 'expo-router';

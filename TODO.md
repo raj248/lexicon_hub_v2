@@ -34,12 +34,13 @@
 
 ## 4. Chapter Navigation
 
-- [ ] Custom drawer for listing chapters
-  - Scrollable chapter list
-  - Highlight current chapter
-  - Tap to navigate to chapter
-- [ ] Option to collapse/expand drawer
-- [ ] Handle large books efficiently (5000+ chapters)
+- [ ] Custom drawer for listing chapters (done)
+- [ ] Scrollable chapter list (done)
+- [ ] Option to collapse/expand drawer (done)
+- [ ] Handle large books efficiently (5000+ chapters) (done)
+- [ ] Highlight current chapter (PARTIAL)
+- [ ] Tap to navigate to chapter
+- [ ] Customize ViewHolder
 
 ## 5. Optional / Future Enhancements
 
