@@ -37,14 +37,17 @@ export default function DrawerExample() {
     );
   }, [isDarkColorScheme]);
 
-  if (!html) return null;
-  if (!filePath) return null;
+  // if (!html) return null;
+  // if (!filePath) return null;
   // if (!bookPath) return null;
 
   return (
     <Drawer
       style={{ flex: 1 }}
       open={open}
+      drawerPosition="right"
+      drawerStyle={{ width: 300 }}
+      drawerType="slide"
       onOpen={() => setOpen(true)}
       onClose={() => setOpen(false)}
       renderDrawerContent={() => {
@@ -60,7 +63,7 @@ export default function DrawerExample() {
         ref={webviewRef}
         injectedJavaScriptBeforeContentLoaded={injectedJS}
         source={{
-          html,
+          html: html ?? '',
         }}
         onMessage={handleMessage}
         menuItems={[{ key: '1', label: 'Coopy' }]}
