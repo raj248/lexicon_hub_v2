@@ -55,11 +55,6 @@ export default function BookWebNavigator({ bookPath }: { bookPath: string }) {
             index={selectedChapter}
             setIndex={setSelectedChapter}
           />
-          // <BookWebPager
-          //   bookPath={bookPath}
-          //   chapters={bookData?.spine.map((ch) => ch.href) ?? []}
-          //   initialIndex={selectedChapter}
-          // />
         )}
       </Drawer.Screen>
     </Drawer.Navigator>

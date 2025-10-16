@@ -14,7 +14,6 @@ import ChapterView from '~/BookWebRenderer/WebReaderStatic';
 
 import { LegendList, LegendListRef, LegendListRenderItemProps } from '@legendapp/list';
 import { FlatList } from 'react-native-gesture-handler';
-import BookWebPager from './BookWebPager';
 import React from 'react';
 import BigList, { BigListItem } from 'react-native-big-list';
 import { List } from 'react-native-paper';
