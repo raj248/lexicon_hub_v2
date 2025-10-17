@@ -1,24 +1,20 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import * as FileSystem from 'expo-file-system';
-import type { OPFData } from '~/epub-core/types';
-import { parseOPFFromBook } from '~/modules/FileUtil';
-
-// const spineHrefToIndex = Object.fromEntries(
-//   bookData.spine.map((item, i) => [item.href, i])
-// );
+import type { OPFData, TocEntry } from '~/epub-core/types';
+import { parseOPFFromBook, parseTOC, prepareChapter } from '~/modules/FileUtil';
 
 async function fetchChapterHtml(bookPath: string, href: string): Promise<string> {
-  const fullPath = `${bookPath}/${href}`;
-  return await FileSystem.readAsStringAsync(fullPath);
+  const filePath = await prepareChapter(bookPath, href);
+  return await FileSystem.readAsStringAsync(`file://${filePath}`);
 }
 
 export function useChapters(bookPath: string | null) {
   const [index, setIndex] = useState(0);
   const queryClient = useQueryClient();
 
-  // Parse OPF and extract chapter spine
-  const { data: bookData } = useQuery({
+  // --- 1️⃣ Parse OPF and extract chapter spine
+  const { data: bookData } = useQuery<OPFData | null>({
     queryKey: ['opf', bookPath],
     queryFn: async () => {
       if (!bookPath) return null;
@@ -27,6 +23,17 @@ export function useChapters(bookPath: string | null) {
     enabled: !!bookPath,
   });
 
+  // --- 2️⃣ Parse TOC (only once we have bookData)
+  const { data: toc = [] } = useQuery<TocEntry[]>({
+    queryKey: ['toc', bookPath],
+    queryFn: async () => {
+      if (!bookPath || !bookData?.metadata.toc) return [];
+      return await parseTOC(bookPath, bookData.metadata.toc);
+    },
+    enabled: !!bookPath && !!bookData?.metadata.toc,
+  });
+
+  // --- 3️⃣ Chapters derived from spine
   const chapters = useMemo(() => {
     if (!bookData) return [];
     return bookData.spine.map((ch) => ({
@@ -35,13 +42,14 @@ export function useChapters(bookPath: string | null) {
     }));
   }, [bookData]);
 
+  // --- 4️⃣ Build mapping: href → spine index
   const spineHrefToIndex = useMemo(() => {
     if (!bookData) return {};
     return Object.fromEntries(bookData.spine.map((item, i) => [item.href, i]));
   }, [bookData]);
 
-  // Load current chapter HTML
-  const { data: html, isLoading } = useQuery({
+  // --- 5️⃣ Load current chapter HTML
+  const { data: html = '', isLoading } = useQuery({
     queryKey: ['chapter', bookPath, chapters[index]?.href],
     queryFn: async () => {
       if (!bookPath || !chapters[index]) return '';
@@ -49,10 +57,9 @@ export function useChapters(bookPath: string | null) {
     },
     enabled: !!bookPath && !!chapters[index],
     staleTime: Infinity,
-    // cacheTime: Infinity,
   });
 
-  // Preload next chapter for smooth navigation
+  // --- 6️⃣ Preload next chapter for smoother reading
   useEffect(() => {
     if (chapters[index + 1]) {
       queryClient.prefetchQuery({
@@ -60,14 +67,55 @@ export function useChapters(bookPath: string | null) {
         queryFn: () => fetchChapterHtml(bookPath!, chapters[index + 1].href),
       });
     }
-  }, [index, chapters]);
+  }, [index, chapters, queryClient, bookPath]);
+
+  // --- 7️⃣ Optional: merge TOC with spine index
+  const tocWithIndex = useMemo(() => {
+    if (!toc.length || !bookData) return [];
+    return toc.map((t) => ({
+      ...t,
+      id: bookData.spine.findIndex((s) => s.href === t.href).toString(),
+    }));
+  }, [toc, bookData]);
+
+  // --- 8️⃣ Navigation helpers
+  const nextChapter = useCallback(() => {
+    if (index < chapters.length - 1) {
+      setIndex((i) => i + 1);
+      return true;
+    }
+    return false;
+  }, [index, chapters.length]);
+
+  const prevChapter = useCallback(() => {
+    if (index > 0) {
+      setIndex((i) => i - 1);
+      return true;
+    }
+    return false;
+  }, [index]);
+
+  const goToChapter = useCallback(
+    (targetIndex: number) => {
+      if (targetIndex >= 0 && targetIndex < chapters.length) {
+        setIndex(targetIndex);
+        return true;
+      }
+      return false;
+    },
+    [chapters.length]
+  );
 
   return {
     bookData,
     chapters,
+    toc: tocWithIndex,
+    spineHrefToIndex,
     index,
-    setIndex,
     html,
     isLoading,
+    nextChapter,
+    prevChapter,
+    goToChapter,
   };
 }

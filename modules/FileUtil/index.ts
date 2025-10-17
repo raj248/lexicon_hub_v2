@@ -1,6 +1,6 @@
 import FileUtilModule from './src/FileUtilModule';
 import { PermissionsAndroid, Platform } from 'react-native';
-import { OPFData } from '~/epub-core/types';
+import { OPFData, TocEntry } from '~/epub-core/types';
 
 export async function ScanFiles(): Promise<string[]> {
   return await FileUtilModule.ScanFiles();
@@ -78,7 +78,7 @@ export async function prepareChapter(bookPath: string, chapterPath: string): Pro
       return '';
     });
 }
-export async function parseTOC(bookPath: string, tocHref: string): Promise<any[]> {
+export async function parseTOC(bookPath: string, tocHref: string): Promise<TocEntry[]> {
   return FileUtilModule.parseTOC(bookPath, tocHref)
     .then((result) => {
       return result;

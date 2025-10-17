@@ -178,6 +178,8 @@ export default function Library() {
         //   result?.metadata.identifier
         // );
         if (result?.metadata.identifier === '9781718375772') {
+          console.log('book', book);
+          console.log('result', result?.metadata);
           console.log('spine', result?.spine);
           FileUtil.parseTOC(book, result?.metadata.toc ?? '').then((toc) => {
             console.log('toc', toc);

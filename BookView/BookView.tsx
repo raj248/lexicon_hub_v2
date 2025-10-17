@@ -9,16 +9,20 @@ import { useEffect, useRef, useState } from 'react';
 import makeInjectedCSS from '~/utils/cssInjection';
 import { OPFData } from '~/epub-core/types';
 import { useWebViewBridge } from '~/hooks/useWebViewBridge';
-import { Stack } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
+import { useChapters } from '~/hooks/useChapters';
+import { ChapterListView } from '~/modules/FileUtil';
 export default function DrawerExample() {
+  // const { bookPath } = useLocalSearchParams();
+  const bookPath = '/storage/emulated/0/Books/Black Summoner Volume 15 Premium.epub';
   const webviewRef = useRef<WebView>(null);
 
   const [open, setOpen] = React.useState(false);
   const [bookData, setBookData] = useState<OPFData | null>(null);
-  const [html, setHtml] = useState<string | null>(null);
   const [filePath, setFilePath] = useState<string | null>(null);
 
   const { colors, isDarkColorScheme } = useColorScheme();
+  const { toc, html, goToChapter, nextChapter, prevChapter } = useChapters(bookPath as string);
 
   const { fullscreen, handleMessage, toggleFullscreen } = useWebViewBridge({
     onImageTap: (data) => console.log('Image tapped', data),
@@ -37,10 +41,12 @@ export default function DrawerExample() {
     );
   }, [isDarkColorScheme]);
 
-  // if (!html) return null;
+  // console.log('toc', toc);
+  // console.log('chapters', chapters);
+  // console.log(chapters[3]?.href);
+  if (!html) return null;
   // if (!filePath) return null;
   // if (!bookPath) return null;
-
   return (
     <Drawer
       style={{ flex: 1 }}
@@ -51,7 +57,17 @@ export default function DrawerExample() {
       onOpen={() => setOpen(true)}
       onClose={() => setOpen(false)}
       renderDrawerContent={() => {
-        return <Text>Drawer content</Text>;
+        return (
+          <ChapterListView
+            style={{ flex: 1 }}
+            chapters={toc}
+            onChapterPress={(event: any) => {
+              console.log(event.nativeEvent);
+              const { id } = event.nativeEvent;
+              goToChapter(Number(id));
+            }}
+          />
+        );
       }}>
       <Stack.Screen options={{ headerShown: !fullscreen, navigationBarHidden: !fullscreen }} />
       <WebView

@@ -13,7 +13,7 @@ export default function Reader() {
   useEffect(() => {
     const tempBook = useBookStore.getState().getBook('9781718500778');
     if (tempBook) {
-      console.log('Loading book: ', tempBook?.path);
+      // console.log('Loading book: ', tempBook?.path);
       setBook(tempBook);
       parseOPFFromBook(tempBook.path ?? '').then((result) => {
         setChapter(result?.spine[1].href ?? '');
@@ -22,7 +22,7 @@ export default function Reader() {
         });
       });
     }
-    console.log('html');
+    // console.log('html');
   }, []);
 
   return (

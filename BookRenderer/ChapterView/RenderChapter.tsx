@@ -28,7 +28,7 @@ export default function ChapterView({ bookPath, filePath }: ChapterViewProps) {
   useEffect(() => {
     const loadHtml = async () => {
       const local_start = performance.now();
-      console.log('Loading chapter: ', filePath);
+      // console.log('Loading chapter: ', filePath);
       try {
         const htmlPath = await prepareChapter(bookPath, filePath);
         const content = await FileSystem.readAsStringAsync(`file://${htmlPath}`);
@@ -37,7 +37,7 @@ export default function ChapterView({ bookPath, filePath }: ChapterViewProps) {
       } catch (e) {
         console.error('Failed to load chapter HTML', e);
       } finally {
-        console.log('Chapter loaded in', (performance.now() - local_start).toFixed(2), 'ms');
+        // console.log('Chapter loaded in', (performance.now() - local_start).toFixed(2), 'ms');
         setLoading(false);
       }
     };
@@ -70,10 +70,10 @@ export default function ChapterView({ bookPath, filePath }: ChapterViewProps) {
           source={{ html: htmlContent }}
           enableExperimentalBRCollapsing
           onDocumentMetadataLoaded={(props) => {
-            console.log('Metadata Loaded', [props.title]);
+            // console.log('Metadata Loaded', [props.title]);
           }}
           onHTMLLoaded={() => {
-            console.log('HTML Loaded in ', (performance.now() - start).toFixed(2), 'ms');
+            // console.log('HTML Loaded in ', (performance.now() - start).toFixed(2), 'ms');
           }}
           baseStyle={{
             fontSize: 16,

@@ -23,6 +23,7 @@ export default function Three() {
     // .getBook('9798855406993');
     //   .getBook(bookId as string);
     if (tempBook) {
+      console.log('tempBook', tempBook);
       setBook(tempBook);
       parseOPFFromBook(tempBook.path ?? '').then((result) => {
         prepareChapter(tempBook.path ?? '', result?.spine[9].href ?? '').then((html) => {

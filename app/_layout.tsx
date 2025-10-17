@@ -18,6 +18,7 @@ import { darkTheme, lightTheme } from '~/theme/theme';
 import { useEffect } from 'react';
 import { HasStoragePermission, RequestStoragePermission } from '~/modules/FileUtil';
 import { Alert } from 'react-native';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 export { ErrorBoundary } from 'expo-router';
 
@@ -44,6 +45,7 @@ export default function RootLayout() {
       }
     });
   }, []);
+  const queryClient = new QueryClient();
 
   useInitialAndroidBarSync();
   const { colorScheme, isDarkColorScheme } = useColorScheme();
@@ -53,21 +55,23 @@ export default function RootLayout() {
       <AppStatusBar />
 
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <PaperProvider
-          theme={isDarkColorScheme ? darkTheme : lightTheme}
-          settings={{
-            icon: (props) => <Feather {...props} />, // override icon component
-          }}>
-          <ActionSheetProvider>
-            <NavThemeProvider value={NAV_THEME[colorScheme]}>
-              <Stack screenOptions={SCREEN_OPTIONS}>
-                <Stack.Screen name="(tabs)" options={TABS_OPTIONS} />
-                <Stack.Screen name="modal" options={MODAL_OPTIONS} />
-                <Stack.Screen name="page" options={SCREEN_OPTIONS} />
-              </Stack>
-            </NavThemeProvider>
-          </ActionSheetProvider>
-        </PaperProvider>
+        <QueryClientProvider client={queryClient}>
+          <PaperProvider
+            theme={isDarkColorScheme ? darkTheme : lightTheme}
+            settings={{
+              icon: (props) => <Feather {...props} />, // override icon component
+            }}>
+            <ActionSheetProvider>
+              <NavThemeProvider value={NAV_THEME[colorScheme]}>
+                <Stack screenOptions={SCREEN_OPTIONS}>
+                  <Stack.Screen name="(tabs)" options={TABS_OPTIONS} />
+                  <Stack.Screen name="modal" options={MODAL_OPTIONS} />
+                  <Stack.Screen name="page" options={SCREEN_OPTIONS} />
+                </Stack>
+              </NavThemeProvider>
+            </ActionSheetProvider>
+          </PaperProvider>
+        </QueryClientProvider>
       </GestureHandlerRootView>
     </>
   );
