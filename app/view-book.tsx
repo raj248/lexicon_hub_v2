@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ActivityIndicator, processColor, View } from 'react-native';
+import { ActivityIndicator, Alert, View } from 'react-native';
 import { Drawer } from 'react-native-drawer-layout';
 import WebView from 'react-native-webview';
 import { injectedJS } from '~/utils/JSInjection';
@@ -20,11 +20,11 @@ export default function DrawerExample() {
   const webviewRef = useRef<WebView>(null);
 
   const [open, setOpen] = React.useState(false);
-  const [titleColor, setTitleColor] = React.useState(0);
 
   const { colors, isDarkColorScheme } = useColorScheme();
-  const { toc, html, goToChapter, nextChapter, prevChapter } = useChapters(bookPath as string);
-  const customTextColor = processColor('#FF4500') as number | undefined; // OrangeRed
+  const { toc, html, goToChapter, nextChapter, prevChapter, index } = useChapters(
+    bookPath as string
+  );
   const { fullscreen, handleMessage, toggleFullscreen } = useWebViewBridge({
     onImageTap: (data) => console.log('Image tapped', data),
     onProgress: (data) => console.log('Reading progress', data),
@@ -37,22 +37,11 @@ export default function DrawerExample() {
     webviewRef.current?.postMessage(
       JSON.stringify({
         type: 'setStyles',
-        css: makeInjectedCSS(colors, 14, 4),
+        css: makeInjectedCSS(colors, 14, 1.45),
       })
     );
-    const c = processColor(colors.foreground);
-    setTitleColor(c as number);
   }, [isDarkColorScheme]);
 
-  // console.log('toc', toc);
-  // console.log('chapters', chapters);
-  // console.log(chapters[3]?.href);
-  if (!html) {
-    console.log('html is null');
-    // return null;
-  }
-  // if (!filePath) return null;
-  // if (!bookPath) return null;
   return (
     <Drawer
       style={{ flex: 1 }}
@@ -99,7 +88,6 @@ export default function DrawerExample() {
         allowUniversalAccessFromFileURLs={true}
         javaScriptEnabled
         domStorageEnabled
-        // startInLoadingState
         renderLoading={() => (
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
             <ActivityIndicator size="large" />
@@ -107,6 +95,7 @@ export default function DrawerExample() {
         )}
         onError={(error) => {
           console.error('WebView error:', error);
+          Alert.alert('Error', error.nativeEvent.description);
         }}
       />
     </Drawer>

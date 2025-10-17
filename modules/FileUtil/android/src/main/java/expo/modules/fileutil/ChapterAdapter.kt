@@ -89,7 +89,6 @@ class ChaptersAdapter(
 // needed to update the list, avoiding a full redraw.
 class ChapterDiffCallback : DiffUtil.ItemCallback<ChapterLink>() {
     override fun areItemsTheSame(oldItem: ChapterLink, newItem: ChapterLink): Boolean {
-        Log.d("FileUtil", "areItemsTheSame: ${oldItem.id} == ${newItem.id}")
         return oldItem.id == newItem.id
     }
 
