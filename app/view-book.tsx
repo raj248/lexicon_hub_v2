@@ -13,9 +13,12 @@ import { Stack, useLocalSearchParams } from 'expo-router';
 import { useChapters } from '~/hooks/useChapters';
 import { ChapterListView } from '~/modules/FileUtil';
 import { useBookStore } from '~/store/bookStore';
+
+import { processColor } from 'react-native';
+
 export default function DrawerExample() {
   const { bookId } = useLocalSearchParams();
-
+  const customTextColor = processColor('#FF4500') as number | undefined; // OrangeRed
   const book = useBookStore.getState().getBook(bookId as string);
 
   const bookPath = book?.path;
@@ -75,6 +78,7 @@ export default function DrawerExample() {
               const { id } = event.nativeEvent;
               goToChapter(Number(id));
             }}
+            chapterTitleColor={customTextColor}
           />
         );
       }}>

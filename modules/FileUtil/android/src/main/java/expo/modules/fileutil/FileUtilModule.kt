@@ -588,6 +588,11 @@ class FileUtilModule : Module() {
             view.chaptersAdapter.submitList(chapterLinks)
         }
 
+        Prop("chapterTitleColor") { view: ChapterListView, colorInt: Int ->
+                // The colorInt is the ARGB integer sent from JavaScript (e.g., from 'processColor')
+                view.setChapterTitleColor(colorInt)
+        }
+
         // Defines an event that the view can send to JavaScript.
         // This name must match the EventDispatcher in ChapterListView.
         Events("onChapterPress")

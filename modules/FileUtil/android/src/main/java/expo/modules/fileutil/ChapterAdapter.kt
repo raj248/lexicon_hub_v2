@@ -13,7 +13,8 @@ import java.lang.ref.WeakReference // Add this import
 // The adapter connects your data to the RecyclerView.
 // It accepts a lambda function `onItemClicked` to handle item presses.
 class ChaptersAdapter(
-    private val onItemClicked: (ChapterLink) -> Unit
+    private val onItemClicked: (ChapterLink) -> Unit,
+    private var titleColor: Int = android.graphics.Color.BLACK
 ) : ListAdapter<ChapterLink, ChaptersAdapter.ChapterViewHolder>(ChapterDiffCallback()) {
 
     // Weak reference to the attached RecyclerView
@@ -29,6 +30,11 @@ class ChaptersAdapter(
         super.onDetachedFromRecyclerView(recyclerView)
         recyclerViewRef?.clear()
     }
+
+    fun setTitleColor(colorInt: Int) {
+        this.titleColor = colorInt
+    }
+
     private var selectedChapterId: String? = null
 
     fun selectChapter(chapterId: String) {
@@ -47,22 +53,13 @@ class ChaptersAdapter(
     class ChapterViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val titleTextView: TextView = itemView.findViewById(R.id.chapterTitleTextView)
 
-        fun bind(chapter: ChapterLink,  onItemClicked: (ChapterLink) -> Unit) {
+        fun bind(chapter: ChapterLink,  onItemClicked: (ChapterLink) -> Unit, color: Int = android.graphics.Color.BLACK) {
             titleTextView.text = chapter.title
-            // updateSelection(chapter.isSelected)
+            titleTextView.setTextColor(color)
             itemView.setOnClickListener { 
                 onItemClicked(chapter) 
             }
         }
-
-        fun updateSelection(isSelected: Boolean) {
-            Log.d("FileUtil", "updateSelection: $isSelected")
-            itemView.setBackgroundResource(
-                if (isSelected) android.R.color.holo_blue_light
-                else android.R.color.transparent
-            )
-        }
-
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChapterViewHolder {
@@ -74,11 +71,11 @@ class ChaptersAdapter(
     override fun onBindViewHolder(holder: ChapterViewHolder, position: Int) {
         val chapter = getItem(position)
         val isSelected = chapter.id == selectedChapterId
-        holder.bind(chapter.copy(isSelected = isSelected), onItemClicked)
+        holder.bind(chapter.copy(isSelected = isSelected), onItemClicked, titleColor)
         holder.itemView.setBackgroundResource(
-                if (isSelected) android.R.color.holo_blue_light
-                else android.R.color.transparent
-            )
+            if (isSelected) android.R.color.holo_blue_light
+            else android.R.color.transparent
+        )
     }
 
 }
