@@ -32,6 +32,11 @@ class ChaptersAdapter(
     }
 
     fun setTitleColor(colorInt: Int) {
+        recyclerView?.post {
+            recyclerView?.scrollBy(0, 1)
+            recyclerView?.scrollBy(0, -1)
+        }
+        Log.d("FileUtil", "setTitleColor: $colorInt")
         this.titleColor = colorInt
     }
 

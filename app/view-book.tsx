@@ -1,38 +1,30 @@
 import * as React from 'react';
-import { ActivityIndicator, View } from 'react-native';
-import { Text } from '~/components/nativewindui/Text';
+import { ActivityIndicator, processColor, View } from 'react-native';
 import { Drawer } from 'react-native-drawer-layout';
 import WebView from 'react-native-webview';
 import { injectedJS } from '~/utils/JSInjection';
 import { useColorScheme } from '~/lib/useColorScheme';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import makeInjectedCSS from '~/utils/cssInjection';
-import { OPFData } from '~/epub-core/types';
 import { useWebViewBridge } from '~/hooks/useWebViewBridge';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useChapters } from '~/hooks/useChapters';
 import { ChapterListView } from '~/modules/FileUtil';
 import { useBookStore } from '~/store/bookStore';
 
-import { processColor } from 'react-native';
-
 export default function DrawerExample() {
   const { bookId } = useLocalSearchParams();
-  const customTextColor = processColor('#FF4500') as number | undefined; // OrangeRed
   const book = useBookStore.getState().getBook(bookId as string);
-
   const bookPath = book?.path;
-  // const bookPath = '/storage/emulated/0/Books/Black Summoner Volume 15 Premium.epub';
 
   const webviewRef = useRef<WebView>(null);
 
   const [open, setOpen] = React.useState(false);
-  const [bookData, setBookData] = useState<OPFData | null>(null);
-  const [filePath, setFilePath] = useState<string | null>(null);
+  const [titleColor, setTitleColor] = React.useState(0);
 
   const { colors, isDarkColorScheme } = useColorScheme();
   const { toc, html, goToChapter, nextChapter, prevChapter } = useChapters(bookPath as string);
-
+  const customTextColor = processColor('#FF4500') as number | undefined; // OrangeRed
   const { fullscreen, handleMessage, toggleFullscreen } = useWebViewBridge({
     onImageTap: (data) => console.log('Image tapped', data),
     onProgress: (data) => console.log('Reading progress', data),
@@ -48,6 +40,8 @@ export default function DrawerExample() {
         css: makeInjectedCSS(colors, 14, 4),
       })
     );
+    const c = processColor(colors.foreground);
+    setTitleColor(c as number);
   }, [isDarkColorScheme]);
 
   // console.log('toc', toc);
@@ -64,7 +58,7 @@ export default function DrawerExample() {
       style={{ flex: 1 }}
       open={open}
       drawerPosition="right"
-      drawerStyle={{ width: 300 }}
+      drawerStyle={{ width: 300, backgroundColor: colors.background }}
       drawerType="slide"
       onOpen={() => setOpen(true)}
       onClose={() => setOpen(false)}
@@ -78,7 +72,7 @@ export default function DrawerExample() {
               const { id } = event.nativeEvent;
               goToChapter(Number(id));
             }}
-            chapterTitleColor={customTextColor}
+            textColor={colors.foreground}
           />
         );
       }}>

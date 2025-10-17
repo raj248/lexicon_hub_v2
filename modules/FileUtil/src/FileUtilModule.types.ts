@@ -21,6 +21,7 @@ export type FileUtilModuleViewProps = {
 export type ChapterListViewProps = {
   chapters: ChapterLink[];
   onChapterPress: (chapter: ChapterLink) => void;
+  textColor?: string;
   chapterTitleColor?: number;
 } & ViewProps;
 
