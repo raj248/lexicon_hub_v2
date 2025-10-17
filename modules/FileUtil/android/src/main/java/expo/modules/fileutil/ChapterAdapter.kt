@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import android.util.Log
+import java.lang.ref.WeakReference // Add this import
 
 // The adapter connects your data to the RecyclerView.
 // It accepts a lambda function `onItemClicked` to handle item presses.
@@ -15,6 +16,19 @@ class ChaptersAdapter(
     private val onItemClicked: (ChapterLink) -> Unit
 ) : ListAdapter<ChapterLink, ChaptersAdapter.ChapterViewHolder>(ChapterDiffCallback()) {
 
+    // Weak reference to the attached RecyclerView
+    private var recyclerViewRef: WeakReference<RecyclerView>? = null
+    private val recyclerView: RecyclerView? get() = recyclerViewRef?.get()
+
+    override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
+        super.onAttachedToRecyclerView(recyclerView)
+        recyclerViewRef = WeakReference(recyclerView)
+    }
+
+    override fun onDetachedFromRecyclerView(recyclerView: RecyclerView) {
+        super.onDetachedFromRecyclerView(recyclerView)
+        recyclerViewRef?.clear()
+    }
     private var selectedChapterId: String? = null
 
     fun selectChapter(chapterId: String) {
@@ -24,7 +38,10 @@ class ChaptersAdapter(
         selectedChapterId = chapterId
         Log.d("FileUtil", "selectChapter: $chapterId")
         if (oldIndex != -1) notifyItemChanged(oldIndex)
-        if (newIndex != -1) notifyItemChanged(newIndex)
+        if (newIndex != -1) {
+            notifyItemChanged(newIndex)
+            recyclerView?.smoothScrollToPosition(newIndex)
+        }
     }
 
     class ChapterViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -32,8 +49,10 @@ class ChaptersAdapter(
 
         fun bind(chapter: ChapterLink,  onItemClicked: (ChapterLink) -> Unit) {
             titleTextView.text = chapter.title
-            updateSelection(chapter.isSelected)
-            itemView.setOnClickListener { onItemClicked(chapter) }
+            // updateSelection(chapter.isSelected)
+            itemView.setOnClickListener { 
+                onItemClicked(chapter) 
+            }
         }
 
         fun updateSelection(isSelected: Boolean) {
@@ -56,6 +75,10 @@ class ChaptersAdapter(
         val chapter = getItem(position)
         val isSelected = chapter.id == selectedChapterId
         holder.bind(chapter.copy(isSelected = isSelected), onItemClicked)
+        holder.itemView.setBackgroundResource(
+                if (isSelected) android.R.color.holo_blue_light
+                else android.R.color.transparent
+            )
     }
 
 }
