@@ -82,8 +82,12 @@ export default function Library() {
           className="rounded-lg p-2"
           onPress={() =>
             InteractionManager.runAfterInteractions(() => {
+              // router.push({
+              //   pathname: '/page',
+              //   params: { bookId: item.id },
+              // });
               router.push({
-                pathname: '/page',
+                pathname: '/view-book',
                 params: { bookId: item.id },
               });
             })

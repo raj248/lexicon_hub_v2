@@ -1,5 +1,5 @@
 import { View, StyleSheet, Text } from 'react-native';
-import DrawerExample from '~/BookView/BookView';
+import DrawerExample from '~/app/view-book';
 import { ChapterListView, FileUtilView } from '~/modules/FileUtil';
 export type Props = {
   chapters: Array<{ id: string; title: string }>;
@@ -9,6 +9,7 @@ export type Props = {
 export default function ChapterListScreen() {
   const chapters = Array.from({ length: 2500 }, (_, i) => ({
     id: `chapter_${i + 1}`,
+    href: `chapter_${i + 1}.html`,
     title: `Chapter ${i + 1}: The Great Journey`,
   }));
 
@@ -17,17 +18,17 @@ export default function ChapterListScreen() {
     console.log(`Pressed chapter: ${title} (ID: ${id})`);
   };
 
-  // return (
-  //   <View style={styles.container}>
-  //     <ChapterListView
-  //       style={styles.list}
-  //       chapters={chapters}
-  //       onChapterPress={handleChapterPress}
-  //     />
-  //   </View>
-  // );
+  return (
+    <View style={styles.container}>
+      <ChapterListView
+        style={styles.list}
+        chapters={chapters}
+        onChapterPress={handleChapterPress}
+      />
+    </View>
+  );
 
-  return <DrawerExample />;
+  // return <DrawerExample />;
 }
 
 const styles = StyleSheet.create({

@@ -457,6 +457,16 @@ class FileUtilModule : Module() {
             val chapterHtml = zipFile.getInputStream(entry).bufferedReader().use { it.readText() }
             val doc = Jsoup.parse(chapterHtml)
 
+            // ✅ Ensure <head> exists
+            val head = doc.head() ?: doc.prependElement("head")
+
+            // ✅ Insert viewport meta (only if not already present)
+            if (head.selectFirst("meta[name=viewport]") == null) {
+                head.appendElement("meta")
+                    .attr("name", "viewport")
+                    .attr("content", "width=device-width, initial-scale=1.0, user-scalable=yes")
+            }
+
             // --- Handle images ---
             doc.select("img").forEach { img ->
                 val src = img.attr("src")
@@ -619,26 +629,29 @@ class FileUtilModule : Module() {
       while (eventType != XmlPullParser.END_DOCUMENT) {
           when (eventType) {
               XmlPullParser.START_TAG -> {
-                  currentTag = parser.name
-                  if (currentTag == "navPoint") {
-                      navLabel = null
-                      contentSrc = null
-                  }
-                  if (currentTag == "content") {
-                    val rawSrc = parser.getAttributeValue(null, "src")?.trim()
-                    if (!rawSrc.isNullOrEmpty()) {
-                        // Resolve relative to NCX folder
-                        contentSrc = if (rawSrc.contains("://")) {
-                            rawSrc // absolute URL, rare but possible
-                        } else if (ncxBasePath.isNotEmpty()) {
-                            // Normalize to handle "../" etc.
-                            File(ncxBasePath, rawSrc).invariantSeparatorsPath
-                        } else {
-                            rawSrc
-                        }
-                    }
+                currentTag = parser.name
+                if (currentTag == "navPoint") {
+                    navLabel = null
+                    contentSrc = null
                 }
-                
+                if (currentTag == "content") {
+                  val rawSrc = parser.getAttributeValue(null, "src")?.trim()
+                  if (!rawSrc.isNullOrEmpty()) {
+                      // Resolve relative to NCX folder
+                      val resolvedSrc = if (rawSrc.contains("://")) {
+                          rawSrc // absolute URL, rare but possible
+                      } else if (ncxBasePath.isNotEmpty()) {
+                          // Normalize to handle "../" etc.
+                          File(ncxBasePath, rawSrc).invariantSeparatorsPath
+                      } else {
+                          rawSrc
+                      }
+                      // 🧹 Clean the href by removing fragments like "#..."
+                      contentSrc = resolvedSrc
+                          .replace(Regex("#.*$"), "") // remove everything after '#'
+                          .replace(Regex("(?<=\\.(x)?html).*"), "") // remove anything weird after .html/.xhtml if exists
+                  }
+                }  
               }
               XmlPullParser.TEXT -> {
                   if (currentTag == "text") navLabel = parser.text.trim()
@@ -715,7 +728,11 @@ class FileUtilModule : Module() {
                       "a" -> {
                           if (insideAnchor && !currentHref.isNullOrEmpty() && !currentTitle.isNullOrEmpty()) {
                               if(tocDir.isNotEmpty()) {
-                                val chapterPath = File(tocDir, currentHref).normalize().path
+                                val resolvedSrc = File(tocDir, currentHref).normalize().path
+                                val chapterPath = resolvedSrc
+                                  .replace(Regex("#.*$"), "") // remove everything after '#'
+                                  .replace(Regex("(?<=\\.(x)?html).*"), "") // remove anything weird after .html/.xhtml if exists
+
                                 chapters.add(mapOf("title" to currentTitle, "href" to chapterPath))
                               }
                           }

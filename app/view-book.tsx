@@ -12,9 +12,15 @@ import { useWebViewBridge } from '~/hooks/useWebViewBridge';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useChapters } from '~/hooks/useChapters';
 import { ChapterListView } from '~/modules/FileUtil';
+import { useBookStore } from '~/store/bookStore';
 export default function DrawerExample() {
-  // const { bookPath } = useLocalSearchParams();
-  const bookPath = '/storage/emulated/0/Books/Black Summoner Volume 15 Premium.epub';
+  const { bookId } = useLocalSearchParams();
+
+  const book = useBookStore.getState().getBook(bookId as string);
+
+  const bookPath = book?.path;
+  // const bookPath = '/storage/emulated/0/Books/Black Summoner Volume 15 Premium.epub';
+
   const webviewRef = useRef<WebView>(null);
 
   const [open, setOpen] = React.useState(false);
