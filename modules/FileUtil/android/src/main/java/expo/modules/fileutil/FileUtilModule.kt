@@ -569,32 +569,43 @@ class FileUtilModule : Module() {
     }
 
     View(ChapterListView::class) {
-        // Defines a setter for the `chapters` prop.
-        // This prop accepts an array of objects from React Native.
+        
         Prop("chapters") { view: ChapterListView, chapters: List<Map<String, String>> ->
-            // We receive a list of maps and convert them into our ChapterLink data class.
+            // 1. Convert the list of maps to ChapterLink data class instances.
             val chapterLinks = chapters.mapNotNull {
                 val id = it["id"]
                 val title = it["title"]
                 val href = it["href"]
-                val isSelected = false
+                val isSelected = it["isSelected"]?.toBoolean() ?: false // Check for initial selection if passed
+                
                 if (id != null && title != null) {
+                    // Ensure the data model for ChapterLink has these properties
                     ChapterLink(id = id, title = title, href = href ?: "", isSelected = isSelected)
                 } else {
                     null
                 }
             }
-            // submitList is a high-performance way to update the RecyclerView's data.
-            view.chaptersAdapter.submitList(chapterLinks)
+
+            // 2. Use submitList with a completion callback
+            view.chaptersAdapter.submitList(chapterLinks) {
+                // This code runs *after* DiffUtil finishes and the list is committed.
+                
+                // Find the index of the first selected chapter, or default to 0
+                val initialScrollPosition = chapterLinks.indexOfFirst { it.isSelected }
+                val targetPosition = if (initialScrollPosition != -1) initialScrollPosition else 0
+
+                // 3. Post the scroll command to the RecyclerView's message queue
+                view.recyclerView.post {
+                    view.recyclerView.smoothScrollToPosition(targetPosition)
+                }
+            }
         }
 
+        // ... (Your other Props and Events) ...
         Prop("chapterTitleColor") { view: ChapterListView, colorInt: Int ->
-                // The colorInt is the ARGB integer sent from JavaScript (e.g., from 'processColor')
-                view.setChapterTitleColor(colorInt)
+            view.setChapterTitleColor(colorInt)
         }
 
-        // Defines an event that the view can send to JavaScript.
-        // This name must match the EventDispatcher in ChapterListView.
         Events("onChapterPress")
     }
   }

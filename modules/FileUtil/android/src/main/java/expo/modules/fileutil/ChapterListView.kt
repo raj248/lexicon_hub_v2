@@ -9,6 +9,7 @@ import expo.modules.kotlin.views.ExpoView
 
 import android.util.Log
 import android.graphics.Color // Needed for the default Color.BLACK check (though not strictly necessary here)
+import android.view.ViewTreeObserver // <-- ADD THIS LINE
 
 class ChapterListView(context: Context, appContext: AppContext) : ExpoView(context, appContext) {
     
@@ -56,5 +57,16 @@ class ChapterListView(context: Context, appContext: AppContext) : ExpoView(conte
     init {
         Log.d("FileUtil", "ChapterListView init")
         addView(recyclerView)
+        recyclerView.viewTreeObserver.addOnGlobalLayoutListener(
+            object : ViewTreeObserver.OnGlobalLayoutListener {
+                override fun onGlobalLayout() {
+                    recyclerView.viewTreeObserver.removeOnGlobalLayoutListener(this)
+                    Log.d("FileUtil", "RecyclerView fully mounted")
+                    recyclerView.post {
+                        recyclerView.smoothScrollToPosition(0)
+                    }
+                }
+            }
+        )
     }
 }

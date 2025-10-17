@@ -42,6 +42,7 @@
 - [ ] Tap to navigate to chapter
 - [ ] Customize ViewHolder
 - [ ] Add customization settings: Modal Chapter List
+- [ ] Scroll to saved chapter
 
 ## 5. Optional / Future Enhancements
 
