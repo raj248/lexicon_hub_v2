@@ -487,19 +487,16 @@ class FileUtilModule : Module() {
 
             // --- Handle CSS ---
             doc.select("link[rel=stylesheet]").forEach { link ->
-                Log.d("FileUtil", "link: $link")
                 val href = link.attr("href")
                 if (href.isNotEmpty()) {
                     val chapterDir = File(chapterHref).parent
                     val resourceZipPath = File(chapterDir, href).normalize().path
                     val resourceEntry = zipFile.getEntry(resourceZipPath)
-                    Log.d("FileUtil", "resourceZipPath: $resourceZipPath")
                     if (resourceEntry != null) {
                         val resourceBytes = zipFile.getInputStream(resourceEntry).readBytes()
                         val targetFile = File(cacheDir, resourceZipPath)
                         targetFile.parentFile?.mkdirs()
                         targetFile.writeBytes(resourceBytes)
-                        Log.d("FileUtil", "targetFile: $targetFile")
                         link.attr("href", "file://${targetFile.absolutePath}")
                     }
                 }
@@ -580,8 +577,9 @@ class FileUtilModule : Module() {
                 val id = it["id"]
                 val title = it["title"]
                 val href = it["href"]
+                val isSelected = false
                 if (id != null && title != null) {
-                    ChapterLink(id = id, title = title, href = href ?: "")
+                    ChapterLink(id = id, title = title, href = href ?: "", isSelected = isSelected)
                 } else {
                     null
                 }

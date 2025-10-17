@@ -8,5 +8,6 @@ import android.os.Parcelable
 data class ChapterLink(
     val id: String,
     val href: String,
-    val title: String
+    val title: String,
+    val isSelected: Boolean = false // <-- New property for DiffUtil
 ) : Parcelable

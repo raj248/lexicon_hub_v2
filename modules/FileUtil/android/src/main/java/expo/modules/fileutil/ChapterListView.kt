@@ -21,8 +21,10 @@ class ChapterListView(context: Context, appContext: AppContext) : ExpoView(conte
             onChapterPress(mapOf(
                 "id" to chapter.id,
                 "href" to chapter.href,
-                "title" to chapter.title
+                "title" to chapter.title,
+                "isSelected" to chapter.isSelected
             ))
+            
         }
     }
 
