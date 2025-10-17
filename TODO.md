@@ -28,6 +28,7 @@
 
 ## 3. Reader UI
 
+- [ ] Integrate Gestures in WebView
 - [ ] Show/hide header and navigation on tap
 - [ ] Smooth animation when hiding/showing header
 - [ ] Ensure tap gestures don’t interfere with reading
@@ -38,9 +39,9 @@
 - [ ] Scrollable chapter list (done)
 - [ ] Option to collapse/expand drawer (done)
 - [ ] Handle large books efficiently (5000+ chapters) (done)
-- [ ] Highlight current chapter (PARTIAL)
-- [ ] Tap to navigate to chapter
-- [ ] Customize ViewHolder
+- [ ] Highlight current chapter (done)
+- [ ] Tap to navigate to chapter (done)
+- [ ] Customize ViewHolder (done)
 - [ ] Add customization settings: Modal Chapter List
 - [ ] Scroll to saved chapter
 
