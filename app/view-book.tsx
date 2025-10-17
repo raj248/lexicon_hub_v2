@@ -50,7 +50,10 @@ export default function DrawerExample() {
   // console.log('toc', toc);
   // console.log('chapters', chapters);
   // console.log(chapters[3]?.href);
-  if (!html) return null;
+  if (!html) {
+    console.log('html is null');
+    // return null;
+  }
   // if (!filePath) return null;
   // if (!bookPath) return null;
   return (
