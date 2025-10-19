@@ -598,17 +598,27 @@ class FileUtilModule : Module() {
                 } else {
                     null
                 }
+
+                val targetPosition = if (initialScrollPosition != -1) initialScrollPosition else 0
+
                 if (selectedChapterIdToScroll != null) {
                     view.chaptersAdapter.selectChapter(selectedChapterIdToScroll)
+                    view.recyclerView.post {
+                      view.recyclerView.scrollToPosition(targetPosition)
+                    }
+                } else {
+                    view.chaptersAdapter.selectChapter(chapterLinks[0].id)
+                    view.recyclerView.post {
+                      view.recyclerView.scrollToPosition(0)
+                    }
                 }
                 // select chapter if the initial scroll position is available
                 
                 // view.selectChapter()
-                val targetPosition = if (initialScrollPosition != -1) initialScrollPosition else 0
 
                 // 3. Post the scroll command to the RecyclerView's message queue
                 view.recyclerView.post {
-                    view.recyclerView.scrollToPosition(targetPosition)
+                    view.recyclerView.smoothScrollToPosition(targetPosition)
                 }
             }
         }
