@@ -42,6 +42,7 @@ export default function DrawerExample() {
     );
   }, [isDarkColorScheme]);
 
+  // console.log('Toc: ', toc);
   return (
     <Drawer
       style={{ flex: 1 }}

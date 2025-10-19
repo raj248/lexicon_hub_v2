@@ -29,4 +29,5 @@ export type ChapterLink = {
   id: string;
   href: string;
   title: string;
+  isSelected?: string;
 };

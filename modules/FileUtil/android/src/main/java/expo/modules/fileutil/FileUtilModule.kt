@@ -577,7 +577,7 @@ class FileUtilModule : Module() {
                 val title = it["title"]
                 val href = it["href"]
                 val isSelected = it["isSelected"]?.toBoolean() ?: false // Check for initial selection if passed
-                
+                Log.d("FileUtil", "Processing chapter: $id, title: $title, href: $href, isSelected: $isSelected")
                 if (id != null && title != null) {
                     // Ensure the data model for ChapterLink has these properties
                     ChapterLink(id = id, title = title, href = href ?: "", isSelected = isSelected)
@@ -592,11 +592,23 @@ class FileUtilModule : Module() {
                 
                 // Find the index of the first selected chapter, or default to 0
                 val initialScrollPosition = chapterLinks.indexOfFirst { it.isSelected }
+                // get chapterid of the index if available else set to 0
+                val selectedChapterIdToScroll = if (initialScrollPosition != -1) {
+                    chapterLinks[initialScrollPosition].id
+                } else {
+                    null
+                }
+                if (selectedChapterIdToScroll != null) {
+                    view.chaptersAdapter.selectChapter(selectedChapterIdToScroll)
+                }
+                // select chapter if the initial scroll position is available
+                
+                // view.selectChapter()
                 val targetPosition = if (initialScrollPosition != -1) initialScrollPosition else 0
 
                 // 3. Post the scroll command to the RecyclerView's message queue
                 view.recyclerView.post {
-                    view.recyclerView.smoothScrollToPosition(targetPosition)
+                    view.recyclerView.scrollToPosition(targetPosition)
                 }
             }
         }

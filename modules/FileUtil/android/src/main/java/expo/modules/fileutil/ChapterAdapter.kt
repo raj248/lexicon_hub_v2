@@ -51,7 +51,7 @@ class ChaptersAdapter(
         if (oldIndex != -1) notifyItemChanged(oldIndex)
         if (newIndex != -1) {
             notifyItemChanged(newIndex)
-            recyclerView?.smoothScrollToPosition(newIndex)
+            recyclerView?.scrollToPosition(newIndex)
         }
     }
 
