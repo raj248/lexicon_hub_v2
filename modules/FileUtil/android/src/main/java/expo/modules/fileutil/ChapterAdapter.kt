@@ -51,6 +51,7 @@ class ChaptersAdapter(
         if (oldIndex != -1) notifyItemChanged(oldIndex)
         if (newIndex != -1) {
             notifyItemChanged(newIndex)
+            Log.d("FileUtil", "Adapter scrollToPosition: $newIndex")
             recyclerView?.scrollToPosition(newIndex)
         }
     }

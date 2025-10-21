@@ -15,6 +15,9 @@ class ChapterListView(context: Context, appContext: AppContext) : ExpoView(conte
     
     private val onChapterPress by EventDispatcher()
 
+    private var chapters: List<Map<String, String>> = emptyList()
+    private var initialIndex: Int = 0
+    
     internal var chapterTitleColor: Int = android.graphics.Color.BLACK 
         private set
 
@@ -40,14 +43,6 @@ class ChapterListView(context: Context, appContext: AppContext) : ExpoView(conte
         )
     }
 
-    // Setter called by the Expo Module system
-    fun setChapterTitleColor(colorInt: Int) {
-        this.chapterTitleColor = colorInt
-        // Assuming ChaptersAdapter has a public setTitleColor method
-        chaptersAdapter.setTitleColor(colorInt)
-        chaptersAdapter.notifyDataSetChanged()
-    }
-
     internal val recyclerView = RecyclerView(context).apply {
         layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
         layoutManager = LinearLayoutManager(context)
@@ -69,4 +64,56 @@ class ChapterListView(context: Context, appContext: AppContext) : ExpoView(conte
             }
         )
     }
+
+
+    // Setter called by the Expo Module system
+    fun setChapterTitleColor(colorInt: Int) {
+        this.chapterTitleColor = colorInt
+        // Assuming ChaptersAdapter has a public setTitleColor method
+        chaptersAdapter.setTitleColor(colorInt)
+        chaptersAdapter.notifyDataSetChanged()
+    }
+
+    fun setChapters(newChapters: List<Map<String, String>>) {
+        chapters = newChapters
+        updateAdapter()
+    }
+
+    fun setInitialIndex(index: Int) {
+        initialIndex = index
+        updateAdapter()
+    }
+
+    private fun updateAdapter() {
+        if (chapters.isEmpty()) return
+
+        val safeIndex = initialIndex.coerceIn(0, chapters.lastIndex)
+        val processedChapters = chapters.mapIndexed { index, map ->
+            val isSelected = index == safeIndex
+            val id = map["id"]
+            val title = map["title"]
+            val href = map["href"]
+
+            if (id != null && title != null) {
+                ChapterLink(
+                    id = id,
+                    title = title,
+                    href = href ?: "",
+                    isSelected = isSelected
+                )
+            } else null
+        }.filterNotNull()
+
+        chaptersAdapter.submitList(processedChapters) {
+            val selectedId = processedChapters.getOrNull(safeIndex)?.id
+            if (selectedId != null) {
+                chaptersAdapter.selectChapter(selectedId)
+                recyclerView.post {
+                    Log.d("FileUtil", "Scrolling to index $safeIndex")
+                    recyclerView.scrollToPosition(safeIndex)
+                }
+            }
+        }
+    }
+
 }

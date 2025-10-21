@@ -57,6 +57,7 @@ export default function DrawerExample() {
           <ChapterListView
             style={{ flex: 1 }}
             chapters={toc}
+            initialIndex={10}
             onChapterPress={(event: any) => {
               console.log(event.nativeEvent);
               const { id } = event.nativeEvent;

@@ -72,11 +72,9 @@ export function useChapters(bookPath: string | null) {
   // --- 7️⃣ Optional: merge TOC with spine index
   const tocWithIndex = useMemo(() => {
     if (!toc.length || !bookData) return [];
-    const savedIndex = 209;
     return toc.map((t, idx) => ({
       ...t,
       id: bookData.spine.findIndex((s) => s.href === t.href).toString(),
-      isSelected: idx === savedIndex ? 'true' : 'false',
     }));
   }, [toc, bookData]);
 

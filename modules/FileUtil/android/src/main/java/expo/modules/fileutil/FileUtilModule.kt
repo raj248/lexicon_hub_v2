@@ -569,67 +569,25 @@ class FileUtilModule : Module() {
     }
 
     View(ChapterListView::class) {
-        
         Prop("chapters") { view: ChapterListView, chapters: List<Map<String, String>> ->
-            // 1. Convert the list of maps to ChapterLink data class instances.
-            val chapterLinks = chapters.mapNotNull {
-                val id = it["id"]
-                val title = it["title"]
-                val href = it["href"]
-                val isSelected = it["isSelected"]?.toBoolean() ?: false // Check for initial selection if passed
-                Log.d("FileUtil", "Processing chapter: $id, title: $title, href: $href, isSelected: $isSelected")
-                if (id != null && title != null) {
-                    // Ensure the data model for ChapterLink has these properties
-                    ChapterLink(id = id, title = title, href = href ?: "", isSelected = isSelected)
-                } else {
-                    null
-                }
-            }
-
-            // 2. Use submitList with a completion callback
-            view.chaptersAdapter.submitList(chapterLinks) {
-                // This code runs *after* DiffUtil finishes and the list is committed.
-                
-                // Find the index of the first selected chapter, or default to 0
-                val initialScrollPosition = chapterLinks.indexOfFirst { it.isSelected }
-                // get chapterid of the index if available else set to 0
-                val selectedChapterIdToScroll = if (initialScrollPosition != -1) {
-                    chapterLinks[initialScrollPosition].id
-                } else {
-                    null
-                }
-
-                val targetPosition = if (initialScrollPosition != -1) initialScrollPosition else 0
-
-                if (selectedChapterIdToScroll != null) {
-                    view.chaptersAdapter.selectChapter(selectedChapterIdToScroll)
-                    view.recyclerView.post {
-                      view.recyclerView.scrollToPosition(targetPosition)
-                    }
-                } else {
-                    view.chaptersAdapter.selectChapter(chapterLinks[0].id)
-                    view.recyclerView.post {
-                      view.recyclerView.scrollToPosition(0)
-                    }
-                }
-                // select chapter if the initial scroll position is available
-                
-                // view.selectChapter()
-
-                // 3. Post the scroll command to the RecyclerView's message queue
-                view.recyclerView.post {
-                    view.recyclerView.smoothScrollToPosition(targetPosition)
-                }
+            view.setChapters(chapters)
+            view.recyclerView.post{
+                view.recyclerView.scrollBy(0, 1)
+                view.recyclerView.scrollBy(0, -1)
             }
         }
 
-        // ... (Your other Props and Events) ...
+        Prop("initialIndex") { view: ChapterListView, index: Int ->
+            view.setInitialIndex(index)
+        }
+
         Prop("chapterTitleColor") { view: ChapterListView, colorInt: Int ->
             view.setChapterTitleColor(colorInt)
         }
 
         Events("onChapterPress")
     }
+
   }
 
   // --- Top-level function to parse TOC ---

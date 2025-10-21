@@ -23,11 +23,11 @@ export type ChapterListViewProps = {
   onChapterPress: (chapter: ChapterLink) => void;
   textColor?: string;
   chapterTitleColor?: number;
+  initialIndex?: number;
 } & ViewProps;
 
 export type ChapterLink = {
   id: string;
   href: string;
   title: string;
-  isSelected?: string;
 };
