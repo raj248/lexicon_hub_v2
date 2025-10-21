@@ -78,6 +78,19 @@ export function useChapters(bookPath: string | null) {
     }));
   }, [toc, bookData]);
 
+  // a 1-d array of index from tocWithIndex with all id
+  const allChapterIds = useMemo(() => {
+    return tocWithIndex.map((t) => Number(t.id));
+  }, [tocWithIndex]);
+
+  //currentSelectedChapter if index in allchapterids, update selected chapter, else dont update
+  const currentSelectedChapter = useMemo(() => {
+    if (allChapterIds.includes(index)) {
+      return Number(tocWithIndex.find((t) => Number(t.id) === index)?.id);
+    }
+    return 0;
+  }, [index, allChapterIds, tocWithIndex]);
+
   // --- 8️⃣ Navigation helpers
   const nextChapter = useCallback(() => {
     if (index < chapters.length - 1) {
@@ -110,6 +123,7 @@ export function useChapters(bookPath: string | null) {
     bookData,
     chapters,
     toc: tocWithIndex,
+    currentSelectedChapter,
     spineHrefToIndex,
     index,
     html,

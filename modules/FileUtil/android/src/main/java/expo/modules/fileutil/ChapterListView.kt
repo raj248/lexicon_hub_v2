@@ -65,6 +65,12 @@ class ChapterListView(context: Context, appContext: AppContext) : ExpoView(conte
         )
     }
 
+    // Expose setSelectedChapter function
+    fun setSelectedChapter(chapterId: String) {
+        Log.d("FileUtil", "setSelectedChapter: $chapterId")
+        chaptersAdapter.selectChapter(chapterId)
+    }
+    
 
     // Setter called by the Expo Module system
     fun setChapterTitleColor(colorInt: Int) {

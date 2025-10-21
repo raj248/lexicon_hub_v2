@@ -585,6 +585,11 @@ class FileUtilModule : Module() {
             view.setChapterTitleColor(colorInt)
         }
 
+        AsyncFunction("setSelectedChapter") { view: ChapterListView, chapterId: String ->
+        // Call the Kotlin function implemented in ChapterListView
+            view.setSelectedChapter(chapterId)
+        }
+
         Events("onChapterPress")
     }
 

@@ -11,6 +11,7 @@ import { Stack, useLocalSearchParams } from 'expo-router';
 import { useChapters } from '~/hooks/useChapters';
 import { ChapterListView } from '~/modules/FileUtil';
 import { useBookStore } from '~/store/bookStore';
+import { ChapterListViewProps } from '~/modules/FileUtil/src/FileUtilModule.types';
 
 export default function DrawerExample() {
   const { bookId } = useLocalSearchParams();
@@ -18,13 +19,21 @@ export default function DrawerExample() {
   const bookPath = book?.path;
 
   const webviewRef = useRef<WebView>(null);
+  const chapterListViewRef = useRef<ChapterListViewProps>(null);
 
   const [open, setOpen] = React.useState(false);
 
   const { colors, isDarkColorScheme } = useColorScheme();
-  const { toc, html, goToChapter, nextChapter, prevChapter, index } = useChapters(
-    bookPath as string
-  );
+  const {
+    toc,
+    html,
+    goToChapter,
+    nextChapter,
+    prevChapter,
+    index,
+    spineHrefToIndex,
+    currentSelectedChapter,
+  } = useChapters(bookPath as string);
   const { fullscreen, handleMessage, toggleFullscreen } = useWebViewBridge({
     onImageTap: (data) => console.log('Image tapped', data),
     onProgress: (data) => console.log('Reading progress', data),
@@ -43,6 +52,10 @@ export default function DrawerExample() {
   }, [isDarkColorScheme]);
 
   // console.log('Toc: ', toc);
+  // console.log('spineHrefToIndex: ', spineHrefToIndex);
+  console.log('index: ', index);
+  console.log('currentSelectedChapter: ', currentSelectedChapter);
+
   return (
     <Drawer
       style={{ flex: 1 }}
@@ -56,8 +69,9 @@ export default function DrawerExample() {
         return (
           <ChapterListView
             style={{ flex: 1 }}
+            ref={chapterListViewRef}
             chapters={toc}
-            initialIndex={10}
+            initialIndex={0}
             onChapterPress={(event: any) => {
               console.log(event.nativeEvent);
               const { id } = event.nativeEvent;

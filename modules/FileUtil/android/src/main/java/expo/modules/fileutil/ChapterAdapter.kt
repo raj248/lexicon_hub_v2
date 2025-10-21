@@ -53,6 +53,10 @@ class ChaptersAdapter(
             notifyItemChanged(newIndex)
             Log.d("FileUtil", "Adapter scrollToPosition: $newIndex")
             recyclerView?.scrollToPosition(newIndex)
+            recyclerView?.post{
+                recyclerView?.scrollBy(0, 1)
+                recyclerView?.scrollBy(0, -1)
+            }
         }
     }
 

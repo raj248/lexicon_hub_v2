@@ -19,11 +19,17 @@ export type FileUtilModuleViewProps = {
 };
 
 export type ChapterListViewProps = {
+  ref: React.RefObject<any>;
   chapters: ChapterLink[];
-  onChapterPress: (chapter: ChapterLink) => void;
   textColor?: string;
   chapterTitleColor?: number;
   initialIndex?: number;
+  onChapterPress: (chapter: ChapterLink) => void;
+  /**
+   * Updates the selected (highlighted) chapter in the native RecyclerView.
+   * @param chapterId The unique string ID of the chapter to select.
+   */
+  setSelectedChapter?: (chapterId: string) => void;
 } & ViewProps;
 
 export type ChapterLink = {
