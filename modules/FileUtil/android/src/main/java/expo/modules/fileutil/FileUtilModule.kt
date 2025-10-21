@@ -428,6 +428,8 @@ class FileUtilModule : Module() {
     AsyncFunction("prepareChapter") { epubPath: String, chapterHref: String, promise: Promise ->
         try {
             // Create cache dir based on EPUB filename (without extension)
+            val globalScriptsCacheDir = File(appContext.cacheDirectory, "scripts")
+
             val cacheDir = File(
                 appContext.cacheDirectory,
                 epubPath.substringAfterLast("/").substringBeforeLast(".")
@@ -518,6 +520,29 @@ class FileUtilModule : Module() {
                 }
             }
 
+            // --- Handle Script Injections ---
+
+            val body = doc.body()
+            if (body != null) {
+                val scriptFilenames = listOf(
+                    "swipe-shift.js",
+                    "reading-progress.js",
+                    "annotations.js",
+                    "intercept-clicks.js"
+                )
+
+                for (filename in scriptFilenames) {
+                    val scriptFile = File(globalScriptsCacheDir, filename)
+                    
+                    // Construct the absolute file URI to be used in the WebView
+                    val scriptUri = "file://${scriptFile.absolutePath}"
+                    Log.d("FileUtil", "scriptUri: $scriptUri")
+
+                    // Append the script tag to the body
+                    body.appendElement("script")
+                        .attr("src", scriptUri)
+                }
+            }
             // --- Save rewritten chapter to cache ---
             cachedChapterFile.parentFile?.mkdirs()
             cachedChapterFile.writeText(doc.outerHtml())

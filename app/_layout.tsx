@@ -19,6 +19,7 @@ import { useEffect } from 'react';
 import { HasStoragePermission, RequestStoragePermission } from '~/modules/FileUtil';
 import { Alert } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { initializeScripts } from '~/utils/copyScriptsToCache';
 
 export { ErrorBoundary } from 'expo-router';
 
@@ -50,6 +51,9 @@ export default function RootLayout() {
   useInitialAndroidBarSync();
   const { colorScheme, isDarkColorScheme } = useColorScheme();
 
+  useEffect(() => {
+    initializeScripts();
+  }, [isDarkColorScheme]);
   return (
     <>
       <AppStatusBar />

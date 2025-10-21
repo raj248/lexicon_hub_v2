@@ -53,6 +53,11 @@ export function useWebViewBridge({
             onImageTap?.(data);
             break;
 
+          case 'linkClick':
+            console.log('linkClick', data);
+            onImageTap?.(data);
+            break;
+
           case 'progress':
             console.log('progress', data);
             onProgress?.(data);
@@ -63,7 +68,7 @@ export function useWebViewBridge({
             toggleFullscreen();
             break;
 
-          case 'swipe-end': {
+          case 'swipe': {
             const now = Date.now();
             if (now - lastSwipeTime.current < 500) return; // debounce
             lastSwipeTime.current = now;

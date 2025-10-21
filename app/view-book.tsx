@@ -37,7 +37,13 @@ export default function DrawerExample() {
   const { fullscreen, handleMessage, toggleFullscreen } = useWebViewBridge({
     onImageTap: (data) => console.log('Image tapped', data),
     onProgress: (data) => console.log('Reading progress', data),
-    onSwipeEnd: (dir) => console.log('Swiped', dir),
+    onSwipeEnd: (dir) => {
+      dir === 'left' ? nextChapter() : prevChapter();
+      const chapterIndex = toc.find((t) => t.id === (index + 1).toString())?.id;
+      if (chapterIndex) {
+        chapterListViewRef.current?.setSelectedChapter?.(chapterIndex);
+      }
+    },
     onBridgeReady: () => console.log('Bridge initialized'),
     onTap: () => console.log('Tap toggle fullscreen'),
   });
@@ -89,7 +95,7 @@ export default function DrawerExample() {
         overScrollMode="never"
         style={{ backgroundColor: 'transparent' }}
         ref={webviewRef}
-        injectedJavaScriptBeforeContentLoaded={injectedJS}
+        // injectedJavaScriptBeforeContentLoaded={injectedJS}
         source={{
           html: html ?? '',
         }}
