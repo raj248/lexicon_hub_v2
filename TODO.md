@@ -28,8 +28,8 @@
 
 ## 3. Reader UI
 
-- [ ] Integrate Gestures in WebView
-- [ ] Show/hide header and navigation on tap
+- [ ] Integrate Gestures in WebView (done)
+- [ ] Show/hide header and navigation on tap (done)
 - [ ] Smooth animation when hiding/showing header
 - [ ] Ensure tap gestures don’t interfere with reading
 
