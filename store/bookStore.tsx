@@ -39,6 +39,8 @@ export type Book = {
 
 type BookStore = {
   books: Record<string, Book>;
+  lastOpenedBookId?: string;
+
   getBook: (id: string) => Book | undefined;
   getBookIds: () => string[];
   getBooks: () => Record<string, Book>;
@@ -55,6 +57,7 @@ export const useBookStore = create<BookStore & { hydrated: boolean }>()(
     (set, get) => ({
       books: {},
       hydrated: false,
+      lastOpenedBookId: undefined,
 
       getBook: (id) => get().books[id],
       getBookIds: () => Object.keys(get().books),
@@ -101,10 +104,12 @@ export const useBookStore = create<BookStore & { hydrated: boolean }>()(
           return { books: newBooks };
         }),
 
-      updateLastOpenedAt: (id, lastOpenedAt) =>
+      updateLastOpenedAt: (id, lastOpenedAt) => {
         set((state) => ({
           books: { ...state.books, [id]: { ...state.books[id], lastOpenedAt } },
-        })),
+        }));
+        set((state) => ({ ...state, lastOpenedBookId: id }));
+      },
 
       updateBook: (id, data) =>
         set((state) => ({

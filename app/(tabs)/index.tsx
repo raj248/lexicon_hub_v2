@@ -10,9 +10,11 @@ import { getRandomBlurhash } from '~/utils/blurhash';
 import Animated, {
   FadeInUp,
   LinearTransition,
+  JumpingTransition,
   runOnJS,
   useAnimatedScrollHandler,
   useSharedValue,
+  FadeOut,
 } from 'react-native-reanimated';
 import { InteractionManager } from 'react-native';
 import { useColorScheme } from '~/lib/useColorScheme';
@@ -53,7 +55,12 @@ export default function Library() {
     return unsubscribe;
   }, [navigation, show]);
 
-  const books = useBookStore((state) => Object.values(state.books));
+  const rawBooks = useBookStore((state) => state.books);
+  const books = useMemo(
+    () => Object.values(rawBooks).sort((a, b) => (b.lastOpenedAt ?? 0) - (a.lastOpenedAt ?? 0)),
+    [rawBooks]
+  );
+
   const [refreshing, setRefreshing] = useState(false);
   const { width } = useWindowDimensions();
   const { isDarkColorScheme } = useColorScheme();
@@ -75,8 +82,10 @@ export default function Library() {
   const renderItem = useCallback(
     ({ item }: { item: Book }) => (
       <Animated.View
+        key={item.id}
         layout={LinearTransition.springify()}
         entering={FadeInUp.delay(100).duration(300)}
+        exiting={FadeOut.delay(100).duration(300)}
         style={{ width: cardWidth, margin: CARD_MARGIN / 2 }}>
         <Pressable
           className="rounded-lg p-2"
@@ -86,11 +95,15 @@ export default function Library() {
               //   pathname: '/page',
               //   params: { bookId: item.id },
               // });
-              useBookStore.getState().updateLastOpenedAt(item.id, Date.now());
               router.push({
                 pathname: '/view-book',
                 params: { bookId: item.id },
               });
+              useBookStore.getState().updateLastOpenedAt(item.id, Date.now());
+            }).then(() => {
+              setTimeout(() => {
+                // useBookStore.getState().updateLastOpenedAt(item.id, Date.now());
+              }, 500);
             })
           }
           style={{
@@ -162,6 +175,7 @@ export default function Library() {
             numColumns={numColumns}
             onScroll={scrollHandler}
             scrollEventThrottle={5}
+            layout={JumpingTransition.duration(350)}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
             contentContainerStyle={{ padding: CARD_MARGIN / 2 }}
             ListEmptyComponent={
