@@ -67,8 +67,8 @@ export default function RootLayout() {
             }}>
             <ActionSheetProvider>
               <NavThemeProvider value={NAV_THEME[colorScheme]}>
-                <Stack screenOptions={SCREEN_OPTIONS}>
-                  <Stack.Screen name="(tabs)" options={TABS_OPTIONS} />
+                <Stack screenOptions={{ ...SCREEN_OPTIONS }}>
+                  <Stack.Screen name="(tabs)" options={{ ...TABS_OPTIONS }} />
                   <Stack.Screen name="modal" options={MODAL_OPTIONS} />
                   <Stack.Screen name="page" options={SCREEN_OPTIONS} />
                 </Stack>

@@ -1,6 +1,7 @@
 // TabBarContext.tsx
 import React, { createContext, useContext, useRef } from 'react';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import * as NavigationBar from 'expo-navigation-bar';
 
 const TabBarContext = createContext<any>(null);
 
@@ -11,11 +12,13 @@ export function TabBarProvider({ children }: { children: React.ReactNode }) {
   const hide = () => {
     if (!isVisible.value) return;
     // translateY.value = withTiming(100, { duration: 250 }); // slide out
+    NavigationBar.setVisibilityAsync('hidden');
     isVisible.value = false;
   };
   const show = () => {
     if (isVisible.value) return;
     // translateY.value = withTiming(0, { duration: 250 }); // slide in
+    NavigationBar.setVisibilityAsync('visible');
     isVisible.value = true;
   };
 

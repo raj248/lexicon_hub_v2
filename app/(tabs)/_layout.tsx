@@ -23,12 +23,17 @@ const NoRippleButton = ({ children, onPress, style }: any) => (
 export default function TabLayout() {
   const { colors, isDarkColorScheme } = useColorScheme();
   const visibility = NavigationBar.useVisibility();
-  useEffect(() => {
-    NavigationBar.setVisibilityAsync('hidden'); // hide
-    return () => {
-      NavigationBar.setVisibilityAsync('visible'); // restore on exit
-    };
-  }, [visibility]);
+  // useEffect(() => {
+  //   if (visibility === 'visible') {
+  //     setTimeout(() => {
+  //       NavigationBar.setVisibilityAsync('hidden');
+  //     }, 2000);
+  //   }
+  //   // NavigationBar.setVisibilityAsync('hidden'); // hide
+  //   return () => {
+  //     // NavigationBar.setVisibilityAsync('visible'); // restore on exit
+  //   };
+  // }, [visibility]);
 
   return (
     <TabBarProvider>

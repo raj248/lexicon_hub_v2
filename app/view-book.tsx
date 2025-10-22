@@ -75,7 +75,14 @@ export default function DrawerExample() {
         );
       }}>
       <Stack.Screen
-        options={{ title: title, headerShown: !fullscreen, navigationBarHidden: !fullscreen }}
+        options={{
+          title: title,
+          freezeOnBlur: true,
+          navigationBarHidden: true,
+          statusBarHidden: true,
+          headerStyle: { backgroundColor: '#5a76f0ff' },
+          headerTintColor: '#fff',
+        }}
       />
       <WebView
         automaticallyAdjustsScrollIndicatorInsets

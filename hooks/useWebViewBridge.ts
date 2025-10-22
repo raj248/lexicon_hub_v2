@@ -29,15 +29,15 @@ export function useWebViewBridge({
   onTap,
 }: UseWebViewBridgeProps) {
   const { colors, isDarkColorScheme } = useColorScheme();
-  const [fullscreen, setFullscreen] = useState(false);
+  const [fullscreen, setFullscreen] = useState(true);
   const lastSwipeTime = useRef(0);
 
   // Toggle fullscreen (StatusBar + NavigationBar)
   const toggleFullscreen = useCallback(() => {
     setFullscreen((prev) => {
       const next = !prev;
-      StatusBar.setHidden(next, 'fade');
-      NavigationBar.setBehaviorAsync('overlay-swipe');
+      console.log('toggleFullscreen', next);
+      StatusBar.setHidden(next, 'slide');
       NavigationBar.setVisibilityAsync(next ? 'hidden' : 'visible');
       onTap?.(); // call optional tap callback
       return next;
