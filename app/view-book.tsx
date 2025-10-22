@@ -20,6 +20,8 @@ export default function DrawerExample() {
   const webviewRef = React.useRef<WebView>(null);
   const chapterListViewRef = React.useRef<ChapterListViewProps>(null);
 
+  const [isWebViewReady, setIsWebViewReady] = React.useState(false); // 👈 control spinner manually
+
   const [open, setOpen] = React.useState(false);
 
   const { colors, isDarkColorScheme } = useColorScheme();
@@ -30,13 +32,22 @@ export default function DrawerExample() {
     onImageTap: (data) => console.log('Image tapped', data),
     onProgress: (data) => console.log('Reading progress', data),
     onSwipeEnd: (dir) => {
-      dir === 'left' ? nextChapter() : prevChapter();
+      if (dir === 'left') {
+        nextChapter() ? setIsWebViewReady(false) : null;
+      } else {
+        prevChapter() ? setIsWebViewReady(false) : null;
+      }
       const chapterIndex = toc.find((t) => t.id === (index + 1).toString())?.id;
       if (chapterIndex) {
         chapterListViewRef.current?.setSelectedChapter?.(chapterIndex);
       }
     },
-    onBridgeReady: () => injectCss(),
+    onBridgeReady: () => {
+      injectCss();
+    },
+    onStylesAck: () => {
+      setIsWebViewReady(true);
+    },
     onTap: () => console.log('Tap toggle fullscreen'),
   });
 
@@ -84,6 +95,22 @@ export default function DrawerExample() {
           headerTintColor: '#fff',
         }}
       />
+
+      {/* Spinner overlay */}
+      {!isWebViewReady && (
+        <View
+          style={{
+            position: 'absolute',
+            inset: 0,
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 10,
+            backgroundColor: colors.background,
+          }}>
+          <ActivityIndicator size="large" />
+        </View>
+      )}
+
       <WebView
         automaticallyAdjustsScrollIndicatorInsets
         contentMode="mobile"

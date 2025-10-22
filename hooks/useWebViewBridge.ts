@@ -14,6 +14,7 @@ type BridgeEvent =
   | { type: string; [key: string]: any };
 
 interface UseWebViewBridgeProps {
+  onStylesAck?: () => void;
   onImageTap?: (data: any) => void;
   onProgress?: (data: any) => void;
   onSwipeEnd?: (direction: 'left' | 'right') => void;
@@ -22,6 +23,7 @@ interface UseWebViewBridgeProps {
 }
 
 export function useWebViewBridge({
+  onStylesAck,
   onImageTap,
   onProgress,
   onSwipeEnd,
@@ -52,6 +54,7 @@ export function useWebViewBridge({
         switch (data.type) {
           case 'setStylesAck':
             console.log('Styles acknowledged by WebView');
+            onStylesAck?.();
             break;
 
           case 'imageClick':
