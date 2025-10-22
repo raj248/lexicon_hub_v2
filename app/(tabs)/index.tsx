@@ -73,10 +73,9 @@ export default function Library() {
     // setTimeout(() => setRefreshing(false), 1000);
   }, []);
 
-  const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
   // --- Responsive layout ---
   const CARD_MAX_WIDTH = 180; // px
-  const CARD_MARGIN = 12; // horizontal margin
+  const CARD_MARGIN = 15; // horizontal margin
   const numColumns = Math.floor(width / (CARD_MAX_WIDTH + CARD_MARGIN));
   const cardWidth = Math.min(CARD_MAX_WIDTH, width / numColumns - CARD_MARGIN);
 
@@ -92,10 +91,6 @@ export default function Library() {
           {
             width: cardWidth,
             margin: CARD_MARGIN / 2,
-          },
-          item.id === selectedBookId && {
-            transform: [{ scale: 1.05 }],
-            zIndex: 10,
           },
         ]}>
         <Pressable
@@ -133,7 +128,11 @@ export default function Library() {
           }}>
           <CoverImage uri={item.coverImage} />
           <View style={{ height: 36, justifyContent: 'center' }}>
-            <Text className="px-1 text-center text-xs" numberOfLines={2} ellipsizeMode="tail">
+            <Text
+              className="px-1 text-center font-semibold"
+              variant={'footnote'}
+              numberOfLines={2}
+              ellipsizeMode="tail">
               {item.title}
             </Text>
           </View>
