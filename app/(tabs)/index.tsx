@@ -73,6 +73,7 @@ export default function Library() {
     // setTimeout(() => setRefreshing(false), 1000);
   }, []);
 
+  const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
   // --- Responsive layout ---
   const CARD_MAX_WIDTH = 180; // px
   const CARD_MARGIN = 12; // horizontal margin
@@ -83,29 +84,37 @@ export default function Library() {
     ({ item }: { item: Book }) => (
       <Animated.View
         key={item.id}
-        layout={LinearTransition.springify()}
-        entering={FadeInUp.delay(100).duration(300)}
-        exiting={FadeOut.delay(100).duration(300)}
-        style={{ width: cardWidth, margin: CARD_MARGIN / 2 }}>
+        sharedTransitionTag={`book-${item.id}`}
+        layout={LinearTransition.springify().mass(0.4).damping(20).stiffness(180)}
+        entering={FadeInUp.duration(250)}
+        exiting={FadeOut.duration(200)}
+        style={[
+          {
+            width: cardWidth,
+            margin: CARD_MARGIN / 2,
+          },
+          item.id === selectedBookId && {
+            transform: [{ scale: 1.05 }],
+            zIndex: 10,
+          },
+        ]}>
         <Pressable
           className="rounded-lg p-2"
-          onPress={() =>
+          onPress={() => {
+            const now = Date.now();
+            // First: trigger shared layout animation
+            ('worklet');
+            useBookStore.getState().updateLastOpenedAt(item.id, now);
+            // then navigate (slightly delayed)
             InteractionManager.runAfterInteractions(() => {
-              // router.push({
-              //   pathname: '/page',
-              //   params: { bookId: item.id },
-              // });
-              router.push({
-                pathname: '/view-book',
-                params: { bookId: item.id },
-              });
-              useBookStore.getState().updateLastOpenedAt(item.id, Date.now());
-            }).then(() => {
               setTimeout(() => {
-                // useBookStore.getState().updateLastOpenedAt(item.id, Date.now());
-              }, 500);
-            })
-          }
+                router.push({
+                  pathname: '/view-book',
+                  params: { bookId: item.id },
+                });
+              }, 150);
+            });
+          }}
           style={{
             backgroundColor: isDarkColorScheme
               ? darkTheme.colors.tertiaryContainer
@@ -118,9 +127,9 @@ export default function Library() {
             shadowOffset: { width: 0, height: 2 },
             borderWidth: 1,
             borderColor: isDarkColorScheme
-              ? darkTheme.colors.outlineVariant // subtle purple/blue border
-              : lightTheme.colors.outlineVariant, // soft lavender-gray border
-            borderRadius: 8, // keep rounded corners consistent
+              ? darkTheme.colors.outlineVariant
+              : lightTheme.colors.outlineVariant,
+            borderRadius: 8,
           }}>
           <CoverImage uri={item.coverImage} />
           <View style={{ height: 36, justifyContent: 'center' }}>
@@ -175,7 +184,7 @@ export default function Library() {
             numColumns={numColumns}
             onScroll={scrollHandler}
             scrollEventThrottle={5}
-            layout={JumpingTransition.duration(350)}
+            // layout={JumpingTransition.duration(350)}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
             contentContainerStyle={{ padding: CARD_MARGIN / 2 }}
             ListEmptyComponent={
