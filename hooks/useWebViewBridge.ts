@@ -4,10 +4,12 @@ import * as NavigationBar from 'expo-navigation-bar';
 import { useColorScheme } from '~/lib/useColorScheme';
 
 type BridgeEvent =
+  | { type: 'setStylesAck'; [key: string]: any }
   | { type: 'imageClick'; [key: string]: any }
+  | { type: 'linkClick'; [key: string]: any }
   | { type: 'progress'; [key: string]: any }
   | { type: 'tap' }
-  | { type: 'swipe-end'; direction: 'left' | 'right' }
+  | { type: 'swipe'; direction: 'left' | 'right' }
   | { type: 'bridgeReady' }
   | { type: string; [key: string]: any };
 
@@ -48,6 +50,10 @@ export function useWebViewBridge({
       try {
         const data: BridgeEvent = JSON.parse(event.nativeEvent.data);
         switch (data.type) {
+          case 'setStylesAck':
+            console.log('Styles acknowledged by WebView');
+            break;
+
           case 'imageClick':
             console.log('imageClick', data);
             onImageTap?.(data);

@@ -528,7 +528,8 @@ class FileUtilModule : Module() {
                     "swipe-shift.js",
                     "reading-progress.js",
                     "annotations.js",
-                    "intercept-clicks.js"
+                    "intercept-clicks.js",
+                    "cssInjection.js"
                 )
 
                 for (filename in scriptFilenames) {

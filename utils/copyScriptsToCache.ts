@@ -43,7 +43,7 @@ async function copyScriptsToCache(scripts: ScriptContent[]): Promise<string[]> {
       cachedPaths.push(destPath);
     }
 
-    console.log('✅ Scripts written to cache:', cachedPaths);
+    // console.log('✅ Scripts written to cache:', cachedPaths);
     return cachedPaths;
   } catch (err) {
     console.error('❌ Failed to write scripts to cache:', err);
@@ -55,19 +55,19 @@ import { SwipeShiftContent } from '~/BookView/scripts/swipe-shift';
 import { ReadingProgressContent } from '~/BookView/scripts/reading-progress';
 import { InterceptContent } from '~/BookView/scripts/intercept-clicks';
 import { AnnotationContent } from '~/BookView/scripts/annotations';
+import { CssInjectionContent } from '~/BookView/scripts/cssInjection';
 // ... other scripts
 
 const scriptsToCache = [
   { filename: 'swipe-shift.js', content: SwipeShiftContent },
   { filename: 'reading-progress.js', content: ReadingProgressContent },
-  // Add your other scripts here
   { filename: 'intercept-clicks.js', content: InterceptContent },
   { filename: 'annotations.js', content: AnnotationContent },
+  { filename: 'cssInjection.js', content: CssInjectionContent },
 ];
 
 export async function initializeScripts() {
   const paths = await copyScriptsToCache(scriptsToCache);
-  console.log('Scripts are ready at:', paths);
 }
 
 // initializeScripts();

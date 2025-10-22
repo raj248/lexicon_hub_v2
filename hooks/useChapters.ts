@@ -10,7 +10,7 @@ async function fetchChapterHtml(bookPath: string, href: string): Promise<string>
 }
 
 export function useChapters(bookPath: string | null) {
-  const [index, setIndex] = useState(10);
+  const [index, setIndex] = useState(0);
   const queryClient = useQueryClient();
 
   // --- 1️⃣ Parse OPF and extract chapter spine
@@ -120,6 +120,7 @@ export function useChapters(bookPath: string | null) {
   );
 
   return {
+    title: bookData?.metadata.title,
     bookData,
     chapters,
     toc: tocWithIndex,

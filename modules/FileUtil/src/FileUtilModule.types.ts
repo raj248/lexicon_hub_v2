@@ -19,7 +19,7 @@ export type FileUtilModuleViewProps = {
 };
 
 export type ChapterListViewProps = {
-  ref: React.RefObject<any>;
+  ref: React.RefObject<any> | undefined;
   chapters: ChapterLink[];
   textColor?: string;
   chapterTitleColor?: number;

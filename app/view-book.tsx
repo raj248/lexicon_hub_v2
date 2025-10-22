@@ -4,7 +4,6 @@ import { Drawer } from 'react-native-drawer-layout';
 import WebView from 'react-native-webview';
 import { injectedJS } from '~/utils/JSInjection';
 import { useColorScheme } from '~/lib/useColorScheme';
-import { useEffect, useRef } from 'react';
 import makeInjectedCSS from '~/utils/cssInjection';
 import { useWebViewBridge } from '~/hooks/useWebViewBridge';
 import { Stack, useLocalSearchParams } from 'expo-router';
@@ -18,23 +17,16 @@ export default function DrawerExample() {
   const book = useBookStore.getState().getBook(bookId as string);
   const bookPath = book?.path;
 
-  const webviewRef = useRef<WebView>(null);
-  const chapterListViewRef = useRef<ChapterListViewProps>(null);
+  const webviewRef = React.useRef<WebView>(null);
+  const chapterListViewRef = React.useRef<ChapterListViewProps>(null);
 
   const [open, setOpen] = React.useState(false);
 
   const { colors, isDarkColorScheme } = useColorScheme();
-  const {
-    toc,
-    html,
-    goToChapter,
-    nextChapter,
-    prevChapter,
-    index,
-    spineHrefToIndex,
-    currentSelectedChapter,
-  } = useChapters(bookPath as string);
-  const { fullscreen, handleMessage, toggleFullscreen } = useWebViewBridge({
+  const { toc, html, goToChapter, nextChapter, prevChapter, index, title } = useChapters(
+    bookPath as string
+  );
+  const { fullscreen, handleMessage } = useWebViewBridge({
     onImageTap: (data) => console.log('Image tapped', data),
     onProgress: (data) => console.log('Reading progress', data),
     onSwipeEnd: (dir) => {
@@ -44,23 +36,18 @@ export default function DrawerExample() {
         chapterListViewRef.current?.setSelectedChapter?.(chapterIndex);
       }
     },
-    onBridgeReady: () => console.log('Bridge initialized'),
+    onBridgeReady: () => injectCss(),
     onTap: () => console.log('Tap toggle fullscreen'),
   });
 
-  useEffect(() => {
+  const injectCss = React.useCallback(() => {
     webviewRef.current?.postMessage(
       JSON.stringify({
         type: 'setStyles',
         css: makeInjectedCSS(colors, 14, 1.45),
       })
     );
-  }, [isDarkColorScheme]);
-
-  // console.log('Toc: ', toc);
-  // console.log('spineHrefToIndex: ', spineHrefToIndex);
-  console.log('index: ', index);
-  console.log('currentSelectedChapter: ', currentSelectedChapter);
+  }, [colors]);
 
   return (
     <Drawer
@@ -87,7 +74,9 @@ export default function DrawerExample() {
           />
         );
       }}>
-      <Stack.Screen options={{ headerShown: !fullscreen, navigationBarHidden: !fullscreen }} />
+      <Stack.Screen
+        options={{ title: title, headerShown: !fullscreen, navigationBarHidden: !fullscreen }}
+      />
       <WebView
         automaticallyAdjustsScrollIndicatorInsets
         contentMode="mobile"

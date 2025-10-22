@@ -1,10 +1,10 @@
-import { Link } from 'expo-router';
+import { Link, Redirect } from 'expo-router';
 import { HeaderButton } from '../../components/HeaderButton';
 import { TabBarIcon } from '../../components/TabBarIcon';
 import { useColorScheme } from '~/lib/useColorScheme';
 import { withLayoutContext } from 'expo-router';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
-import { TouchableOpacity } from 'react-native';
+import { Dimensions, TouchableOpacity } from 'react-native';
 import * as NavigationBar from 'expo-navigation-bar';
 import { useEffect } from 'react';
 import { TabBarProvider } from '~/context/TabBarContext';
@@ -24,10 +24,8 @@ export default function TabLayout() {
   const { colors, isDarkColorScheme } = useColorScheme();
   const visibility = NavigationBar.useVisibility();
   useEffect(() => {
-    console.log('Hiding navigation bar...');
     NavigationBar.setVisibilityAsync('hidden'); // hide
     return () => {
-      console.log('Showing navigation bar...');
       NavigationBar.setVisibilityAsync('visible'); // restore on exit
     };
   }, [visibility]);
@@ -35,9 +33,12 @@ export default function TabLayout() {
   return (
     <TabBarProvider>
       <Tabs
-        initialRouteName="two"
         tabBar={(props) => <AnimatedTabBar {...props} />}
         tabBarPosition="bottom"
+        keyboardDismissMode="on-drag"
+        initialLayout={{
+          width: Dimensions.get('window').width,
+        }}
         screenOptions={{
           tabBarPressColor: 'transparent', // removes ripple
           tabBarPressOpacity: 0.5,
@@ -83,13 +84,14 @@ export default function TabLayout() {
             ),
           }}
         />
-        <Tabs.Screen
+        {/* <Tabs.Screen
           name="library/[test]"
           options={{
             title: 'Debug',
             tabBarIcon: ({ name, color }: { name: string; color: string }) => (
               <TabBarIcon name="terminal" color={color} />
             ),
+            tabBarVisible: false, //
           }}
         />
         <Tabs.Screen
@@ -100,18 +102,17 @@ export default function TabLayout() {
             tabBarIcon: ({ name, color }: { name: string; color: string }) => (
               <TabBarIcon name="book-open" color={color} />
             ),
+            tabBarStyle: { display: 'none' },
             tabBarVisible: false, //
           }}
-        />
+        /> */}
         <Tabs.Screen
           name="two"
           options={{
-            hideTabBar: true,
             title: 'Settings',
             tabBarIcon: ({ name, color }: { name: string; color: string }) => (
-              <TabBarIcon name="code" color={color} />
+              <TabBarIcon name="settings" color={color} />
             ),
-            tabBarVisible: false, //
           }}
         />
       </Tabs>
