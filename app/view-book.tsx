@@ -91,7 +91,7 @@ export default function DrawerExample() {
           freezeOnBlur: true,
           navigationBarHidden: true,
           statusBarHidden: true,
-          headerStyle: { backgroundColor: '#5a76f0ff' },
+          headerStyle: { backgroundColor: isDarkColorScheme ? '#0b0220' : '#b4c1f8' },
           headerTintColor: '#fff',
         }}
       />
