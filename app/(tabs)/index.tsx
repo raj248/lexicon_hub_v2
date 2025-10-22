@@ -86,6 +86,7 @@ export default function Library() {
               //   pathname: '/page',
               //   params: { bookId: item.id },
               // });
+              useBookStore.getState().updateLastOpenedAt(item.id, Date.now());
               router.push({
                 pathname: '/view-book',
                 params: { bookId: item.id },

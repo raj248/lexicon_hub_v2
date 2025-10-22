@@ -26,9 +26,12 @@ export type Book = {
   author: string;
   coverImage?: string;
   language?: string;
+  path?: string; // Path for local files (if EPUB/PDF)
+
+  lastOpenedAt?: number;
+
   category?: string[];
   description?: string;
-  path?: string; // Path for local files (if EPUB/PDF)
   volumes?: string; // Only for Light Novels (list of volume file paths)
   addedAt?: number;
   externalLink?: string; // Store external sources for the book
@@ -41,6 +44,7 @@ type BookStore = {
   getBooks: () => Record<string, Book>;
   addBook: (book: Book) => void;
   addBooks: (books: Book[]) => void;
+  updateLastOpenedAt: (id: string, lastOpenedAt: number) => void;
   updateBook: (id: string, data: Partial<Book>) => void;
   removeBook: (id: string) => void;
   debugClear: () => void;
@@ -96,6 +100,11 @@ export const useBookStore = create<BookStore & { hydrated: boolean }>()(
 
           return { books: newBooks };
         }),
+
+      updateLastOpenedAt: (id, lastOpenedAt) =>
+        set((state) => ({
+          books: { ...state.books, [id]: { ...state.books[id], lastOpenedAt } },
+        })),
 
       updateBook: (id, data) =>
         set((state) => ({

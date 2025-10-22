@@ -206,15 +206,22 @@ export default function Library() {
     console.log('✅ Total testModule time:', (performance.now() - startTime).toFixed(2), 'ms');
   };
 
+  const listBookStore = async () => {
+    const books = useBookStore.getState().getBooks();
+    console.log('Books in store:', Object.keys(books).length);
+    Object.values(books).forEach((book) => {
+      // console.log(`- ${book.title} by ${book.author} (ID: ${book.id})`);
+      // console.log(Object.keys(book));
+      console.log(book);
+    });
+  };
+
   return (
-    <SafeAreaView style={{ flex: 1 }} edges={['bottom', 'left', 'right', 'top']}>
+    <SafeAreaView
+      style={{ flex: 1, overflowY: 'scroll' }}
+      edges={['bottom', 'left', 'right', 'top']}>
       <Text className="text-lg">Library</Text>
-      {/* {books.map((book, index) => (
-        <Text key={index} className="text-base">
-          {book}
-        </Text>
-      ))} */}
-      <Text>{books.length} books found</Text>
+
       {books.length === 0 && <Text variant={'body'}>No books found</Text>}
       <Button
         title="Web Reader"
@@ -286,6 +293,12 @@ export default function Library() {
             pathname: '/page',
             params: { bookId: '9798855406993' },
           });
+        }}
+      />
+      <Button
+        title="List Book Store"
+        onPress={() => {
+          listBookStore();
         }}
       />
     </SafeAreaView>
