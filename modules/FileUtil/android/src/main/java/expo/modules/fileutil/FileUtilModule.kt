@@ -487,6 +487,29 @@ class FileUtilModule : Module() {
                 }
             }
 
+            // --- Handle <svg><image> elements (xlink namespace safe) ---
+            doc.select("svg image").forEach { image ->
+                val href = image.attr("xlink:href").ifEmpty { image.attr("href") }
+                if (href.isNotEmpty()) {
+                    val chapterDir = File(chapterHref).parentFile
+                    val resourcePath = File(chapterDir, href).normalize().path
+                    val resourceEntry = zipFile.getEntry(resourcePath)
+
+                    if (resourceEntry != null) {
+                        val resourceBytes = zipFile.getInputStream(resourceEntry).readBytes()
+                        val targetFile = File(cacheDir, resourcePath)
+                        targetFile.parentFile?.mkdirs()
+                        targetFile.writeBytes(resourceBytes)
+
+                        // ✅ Rewrite both attributes for safety
+                        image.attr("xlink:href", "file://${targetFile.absolutePath}")
+                        image.attr("href", "file://${targetFile.absolutePath}")
+                    } else {
+                        Log.w("FileUtil", "⚠ Missing SVG image resource: $href")
+                    }
+                }
+            }
+
             // --- Handle CSS ---
             doc.select("link[rel=stylesheet]").forEach { link ->
                 val href = link.attr("href")
