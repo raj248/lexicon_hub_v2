@@ -33,7 +33,14 @@
 - [ ] Smooth animation when hiding/showing header
 - [ ] Ensure tap gestures don’t interfere with reading
 
-## 4. Chapter Navigation
+## 4. Reader Logic
+
+- [ ] SVG Image support (done)
+- [ ] CBZ Support
+- [ ] PDF Support
+- [ ] Open as support (open zip as cbz or epub)
+
+## 5. Chapter Navigation
 
 - [ ] Custom drawer for listing chapters (done)
 - [ ] Scrollable chapter list (done)
@@ -45,7 +52,7 @@
 - [ ] Add customization settings: Modal Chapter List
 - [ ] Scroll to saved chapter
 
-## 5. Optional / Future Enhancements
+## 6. Optional / Future Enhancements
 
 - [ ] Cloud backup of progress & bookmarks (Google Drive, GitHub)
 - [ ] Search within book chapters
