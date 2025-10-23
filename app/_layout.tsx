@@ -20,8 +20,10 @@ import { HasStoragePermission, RequestStoragePermission } from '~/modules/FileUt
 import { Alert } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { initializeScripts } from '~/utils/copyScriptsToCache';
-
+import { useFileIntent } from '~/hooks/useShareIntent';
+import { Linking } from 'react-native';
 export { ErrorBoundary } from 'expo-router';
+import * as FileSystem from 'expo-file-system';
 
 export default function RootLayout() {
   useEffect(() => {
@@ -54,6 +56,33 @@ export default function RootLayout() {
   useEffect(() => {
     initializeScripts();
   }, [isDarkColorScheme]);
+
+  // useFileIntent();
+
+  useEffect(() => {
+    const handleDeepLink = async (event: any) => {
+      console.log(event);
+      if (event.url) {
+        // Process the incoming URL
+        console.log('Received deep link:', event.url);
+        // Example: navigate to a specific screen based on the URL path
+        FileSystem.copyAsync({ from: event.url, to: `${FileSystem.cacheDirectory}/shared/` })
+          .then(() => console.log('copied'))
+          .catch((e) => console.log(e));
+      }
+    };
+
+    // Get the initial URL if the app was launched by a deep link
+    Linking.getInitialURL().then(handleDeepLink);
+
+    // Listen for new deep links while the app is running
+    const subscription = Linking.addEventListener('url', handleDeepLink);
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
   return (
     <>
       <AppStatusBar />

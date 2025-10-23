@@ -11,6 +11,7 @@ export default {
     },
     plugins: [
       'expo-router',
+      './plugins/withFileIntent.js',
       'expo-font',
       [
         'expo-dev-launcher',
