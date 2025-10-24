@@ -2,7 +2,7 @@ export default {
   expo: {
     name: 'Lexicon Hub',
     slug: 'lexicon-hub-v2',
-    version: '2.0.0b',
+    version: '2.0.1',
     scheme: 'lexicon-hub-v2',
     web: {
       bundler: 'metro',
