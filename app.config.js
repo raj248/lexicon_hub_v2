@@ -11,7 +11,7 @@ export default {
     },
     plugins: [
       'expo-router',
-      './plugins/withFileIntent.js',
+      // './plugins/withFileIntent.js',
       'expo-font',
       [
         'expo-dev-launcher',
@@ -20,6 +20,24 @@ export default {
         },
       ],
       'expo-web-browser',
+      [
+        'expo-share-intent',
+        {
+          iosActivationRules: {
+            // Enable file sharing for files (iOS)
+            NSExtensionActivationSupportsFileWithMaxCount: 1,
+          },
+          androidIntentFilters: [
+            // Enable all file types for single share (Android)
+            '*/*',
+          ],
+          androidMultiIntentFilters: [
+            // Enable all file types for multiple shares (Android)
+            '*/*',
+          ],
+          mimeType: ['application/pdf', 'application/epub+zip', 'application/zip'],
+        },
+      ],
     ],
     experiments: {
       typedRoutes: true,

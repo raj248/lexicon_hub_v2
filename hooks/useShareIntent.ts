@@ -1,37 +1,60 @@
 import { useEffect } from 'react';
-import * as FileSystem from 'expo-file-system';
-import ReceiveSharingIntent from 'react-native-receive-sharing-intent';
+import { Linking } from 'react-native';
+import RNBlobUtil from 'react-native-blob-util';
 
 export function useFileIntent() {
   useEffect(() => {
-    ReceiveSharingIntent.getReceivedFiles(
-      async (files: any[]) => {
-        for (const file of files) {
-          if (file.weblink) {
-            try {
-              // Create a local path in your app's cache
-              const fileName = file.fileName || 'shared-file';
-              const localUri = `${FileSystem.cacheDirectory}${fileName}`;
+    const handleDeepLink = async (event: any) => {
+      try {
+        const uri = event?.url;
+        if (!uri) return;
 
-              // Copy the content URI to a local file
-              const copied = await FileSystem.copyAsync({
-                from: file.weblink,
-                to: localUri,
-              });
+        console.log('📩 Received URI:', uri);
 
-              console.log('Local file path:', localUri);
-              // Now you can open it with your EPUB/PDF reader
-            } catch (err) {
-              console.warn('Failed to copy shared file', file.weblink, err);
-            }
-          } else {
-            console.warn('Received file without weblink:', file);
-          }
-        }
-      },
-      (error: any) => console.error(error)
-    );
+        // Create a safe cache folder for shared files
+        const cacheDir = `${RNBlobUtil.fs.dirs.CacheDir}/shared`;
+        await RNBlobUtil.fs.exists(cacheDir).then((exists) => {
+          if (!exists) RNBlobUtil.fs.mkdir(cacheDir);
+        });
 
-    return () => ReceiveSharingIntent.clearReceivedFiles();
+        // Try to extract a filename
+        let filename = uri.split('/').pop() || `shared_${Date.now()}`;
+        if (!filename.includes('.')) filename += '.epub'; // fallback
+
+        const dest = `${cacheDir}/${filename}`;
+
+        // Copy the content URI to a real file
+        await RNBlobUtil.fs.cp(uri, dest);
+
+        // Get file details
+        const stat = await RNBlobUtil.fs.stat(dest);
+
+        console.log('✅ File copied successfully:');
+        console.log({
+          originalUri: uri,
+          destination: dest,
+          filename: stat.filename,
+          path: stat.path,
+          size: stat.size,
+          // mime: stat.mime,
+          type: stat.type,
+          lastModified: stat.lastModified,
+        });
+
+        // Now you can open the file or pass `dest` to your EPUB/PDF reader.
+      } catch (error) {
+        console.error('❌ Failed to process incoming file:', error);
+      }
+    };
+
+    // Handle the initial deep link (app cold start)
+    Linking.getInitialURL().then((url) => {
+      if (url) handleDeepLink({ url });
+    });
+
+    // Subscribe for new deep links (when app is open)
+    const sub = Linking.addEventListener('url', handleDeepLink);
+
+    return () => sub.remove();
   }, []);
 }

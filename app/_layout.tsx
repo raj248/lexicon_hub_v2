@@ -21,11 +21,10 @@ import { Alert } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { initializeScripts } from '~/utils/copyScriptsToCache';
 import { useFileIntent } from '~/hooks/useShareIntent';
-import { Linking } from 'react-native';
 export { ErrorBoundary } from 'expo-router';
-import * as FileSystem from 'expo-file-system';
-
+import { useShareIntent } from 'expo-share-intent';
 export default function RootLayout() {
+  const { hasShareIntent, shareIntent, resetShareIntent, error } = useShareIntent({});
   useEffect(() => {
     HasStoragePermission().then((result) => {
       if (!result) {
@@ -57,31 +56,49 @@ export default function RootLayout() {
     initializeScripts();
   }, [isDarkColorScheme]);
 
-  // useFileIntent();
-
   useEffect(() => {
-    const handleDeepLink = async (event: any) => {
-      console.log(event);
-      if (event.url) {
-        // Process the incoming URL
-        console.log('Received deep link:', event.url);
-        // Example: navigate to a specific screen based on the URL path
-        FileSystem.copyAsync({ from: event.url, to: `${FileSystem.cacheDirectory}/shared/` })
-          .then(() => console.log('copied'))
-          .catch((e) => console.log(e));
-      }
-    };
+    if (error) {
+      console.error('Share Intent Error:', error);
+      alert(`Error processing share: ${error}`);
+      return;
+    }
 
-    // Get the initial URL if the app was launched by a deep link
-    Linking.getInitialURL().then(handleDeepLink);
+    if (hasShareIntent && shareIntent.files && shareIntent.files.length > 0) {
+      handleSharedFiles(shareIntent.files);
+    }
+  }, [hasShareIntent, shareIntent, error]);
 
-    // Listen for new deep links while the app is running
-    const subscription = Linking.addEventListener('url', handleDeepLink);
+  const handleSharedFiles = (files: any[]) => {
+    console.log('Received Shared Files:', files);
 
-    return () => {
-      subscription.remove();
-    };
-  }, []);
+    // This example processes the first shared file
+    const file = files[0];
+
+    // Extract file details
+    const fileName = file.fileName;
+    const filePath = file.path; // Local path to the file in your app's temporary directory
+    const mimeType = file.mimeType;
+    const fileSize = file.size;
+
+    let fileType = 'Unknown';
+    if (mimeType.includes('pdf')) {
+      fileType = 'PDF Document';
+    } else if (mimeType.includes('epub')) {
+      fileType = 'EPUB E-book';
+    } else if (mimeType.includes('zip') || fileName.toLowerCase().endsWith('.zip')) {
+      fileType = 'ZIP Archive';
+    }
+
+    alert(`File Shared!\nType: ${fileType}\nName: ${fileName}\nPath: ${filePath}`);
+
+    // **IMPORTANT**: After you've processed the shared intent (e.g., saved the file to permanent storage,
+    // navigated to a viewer, etc.), you must reset the intent to avoid processing it again on re-render.
+    // The shared file at 'filePath' is usually in a temporary cache and should be moved
+    // to a more permanent location using 'expo-file-system' if you need it long-term.
+    resetShareIntent();
+  };
+
+  // useFileIntent();
 
   return (
     <>
