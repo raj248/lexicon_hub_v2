@@ -13,6 +13,16 @@
 Use Kotlin native module for PDF parsing/rendering
 
 Text reflow toggle
+Search within EPUB text
+Page count estimation (Kotlin-based)
+Smooth animations for header/footer visibility
+Scroll position indicator / progress bar
+Page number indicator (x of y)
+Keep screen awake while reading
+Haptic feedback for chapter change or tap zones
+Search/filter chapters
+Sticky current chapter header
+Chapter progress bar (visual)
 
 ## 1. Book Progress
 
