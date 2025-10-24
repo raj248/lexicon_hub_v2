@@ -9,7 +9,7 @@ export async function exploreCache(dir: string = FileSystem.cacheDirectory!) {
       const fullPath = dir + item;
       try {
         const isDir = (await FileSystem.getInfoAsync(`file://${fullPath}`)).isDirectory;
-        //   console.log('Item:', fullPath, isDir ? 'directory' : 'file');
+        console.log('Item:', fullPath, isDir ? 'directory' : 'file');
         if (isDir) {
           await exploreCache(fullPath); // recurse
         }

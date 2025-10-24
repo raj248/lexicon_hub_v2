@@ -33,16 +33,67 @@ class FileUtilModule : Module() {
     Name("FileUtil")
 
     OnNewIntent { intent ->
-      val action = intent?.action
-      val data = intent?.data
+        val action = intent?.action
+        val data: Uri? = intent?.data
 
-      if (Intent.ACTION_VIEW == action && data != null) {
-        val uriString = data.toString()
-        Log.d("FileUtil", "📖 Received VIEW intent with URI: $uriString")
+        if (Intent.ACTION_VIEW == action && data != null) {
+            val uriString = data.toString()
+            Log.d("FileUtil", "📖 Received VIEW intent with URI: $uriString")
 
-        // You can emit an event to JS side:
-        sendEvent("onOpenWithIntent", mapOf("uri" to uriString))
-      }
+            try {
+                val activity = appContext.currentActivity
+                if (activity != null) {
+                    // 1️⃣ Get MIME type
+                    val mimeType = activity.contentResolver.getType(data)
+                    Log.d("FileUtil", "MIME type: $mimeType")
+
+                    // 2️⃣ Open an InputStream from content:// URI
+                    val inputStream = activity.contentResolver.openInputStream(data)
+                    if (inputStream != null) {
+                        // Example: read first few bytes or copy to cache
+                        val cacheDir = File(appContext.cacheDirectory, "shared")
+                        // ✅ Ensure cacheDir exists and is a directory
+                        if (cacheDir.exists()) {
+                            if (!cacheDir.isDirectory) {
+                                cacheDir.delete() // delete a file that conflicts with directory
+                                cacheDir.mkdirs()
+                            }
+                        } else {
+                            cacheDir.mkdirs()
+                        }
+
+                        // Sanitize filename
+                        val rawFilename = queryFileName(activity, data) ?: "shared_${System.currentTimeMillis()}"
+                        val safeFilename = rawFilename.replace(Regex("[^A-Za-z0-9._-]"), "_")
+
+                        val destFile = File(cacheDir, safeFilename)
+
+                        // Ensure parent exists
+                        destFile.parentFile?.mkdirs()
+
+                        inputStream.use { input ->
+                            FileOutputStream(destFile).use { output ->
+                                input.copyTo(output)
+                            }
+                        }
+
+                        Log.d("FileUtil", "✅ File copied to cache: ${destFile.absolutePath}")
+
+                        // Emit to JS
+                        sendEvent(
+                            "onOpenWithIntent",
+                            mapOf(
+                                "uri" to uriString,
+                                "mimeType" to mimeType,
+                                "cachePath" to destFile.absolutePath
+                            )
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("FileUtil", "Failed to resolve content URI: ${e.message}", e)
+            }
+        }
     }
 
     Events("onOpenWithIntent")
@@ -657,6 +708,18 @@ class FileUtilModule : Module() {
         Events("onChapterPress")
     }
 
+  }
+
+
+  // Helper: query display name from ContentResolver
+  fun queryFileName(activity: android.app.Activity, uri: Uri): String? {
+      val cursor = activity.contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)
+      cursor?.use {
+          if (it.moveToFirst()) {
+              return it.getString(it.getColumnIndexOrThrow(android.provider.OpenableColumns.DISPLAY_NAME))
+          }
+      }
+      return null
   }
 
   // --- Top-level function to parse TOC ---
