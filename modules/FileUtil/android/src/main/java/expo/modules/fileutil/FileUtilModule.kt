@@ -32,6 +32,21 @@ class FileUtilModule : Module() {
   override fun definition() = ModuleDefinition {
     Name("FileUtil")
 
+    OnNewIntent { intent ->
+      val action = intent?.action
+      val data = intent?.data
+
+      if (Intent.ACTION_VIEW == action && data != null) {
+        val uriString = data.toString()
+        Log.d("FileUtil", "📖 Received VIEW intent with URI: $uriString")
+
+        // You can emit an event to JS side:
+        sendEvent("onOpenWithIntent", mapOf("uri" to uriString))
+      }
+    }
+
+    Events("onOpenWithIntent")
+
     AsyncFunction("RequestStoragePermission") { promise: Promise ->
       val activity = appContext.currentActivity ?: run {
         promise.reject("E_NO_ACTIVITY", "No current activity", null)
