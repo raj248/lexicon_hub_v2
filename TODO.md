@@ -3,6 +3,16 @@
 ## App Navigation
 
 - [ ] Long Press on book, sticky header/ context menu
+- - [ ] Add a "Continue Reading" section on the main library screen
+        Persistent navigation state (reopen last screen)
+        Smooth transition animations between screens
+        Delete book from device (with confirmation)
+        Handle file renames or missing files gracefully
+        PDF support (planned)
+
+Use Kotlin native module for PDF parsing/rendering
+
+Text reflow toggle
 
 ## 1. Book Progress
 
@@ -56,9 +66,16 @@
 - [ ] Add customization settings: Modal Chapter List
 - [ ] Scroll to saved chapter
 
+## 6. Image Viewer
+
+- [ ] Implement a custom image viewer for full-screen image display
+- [ ] Add zoom and pan functionality to the image viewer
+- [ ] Ensure smooth transitions when opening and closing the image viewer
+
 ## 6. Optional / Future Enhancements
 
 - [ ] Cloud backup of progress & bookmarks (Google Drive, GitHub)
+- [ ] Text-to-speech integration
 - [ ] Search within book chapters
 - [ ] Annotation/highlight support
 - [ ] Reading stats (time spent, progress %)
