@@ -23,6 +23,7 @@ import { initializeScripts } from '~/utils/copyScriptsToCache';
 import { useFileIntent } from '~/hooks/useShareIntent';
 export { ErrorBoundary } from 'expo-router';
 import { useShareIntent } from 'expo-share-intent';
+import { useInAppUpdate } from '~/hooks/useInAppUpdate';
 export default function RootLayout() {
   const { hasShareIntent, shareIntent, resetShareIntent, error } = useShareIntent({});
   useEffect(() => {
@@ -55,6 +56,14 @@ export default function RootLayout() {
   useEffect(() => {
     initializeScripts();
   }, [isDarkColorScheme]);
+
+  const { updateAvailable } = useInAppUpdate();
+
+  useEffect(() => {
+    if (updateAvailable) {
+      Alert.alert('Update Available', 'A new version is available. Please update from Play Store.');
+    }
+  }, [updateAvailable]);
 
   useEffect(() => {
     if (error) {
