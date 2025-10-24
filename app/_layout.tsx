@@ -59,7 +59,7 @@ export default function RootLayout() {
   useEffect(() => {
     if (error) {
       console.error('Share Intent Error:', error);
-      alert(`Error processing share: ${error}`);
+      // alert(`Error processing share: ${error}`);
       return;
     }
 
