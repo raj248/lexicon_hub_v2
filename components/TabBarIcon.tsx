@@ -5,7 +5,7 @@ export const TabBarIcon = (props: {
   name: React.ComponentProps<typeof Feather>['name'];
   color: string;
 }) => {
-  return <Feather size={28} style={styles.tabBarIcon} {...props} />;
+  return <Feather size={22} style={styles.tabBarIcon} {...props} />;
 };
 
 export const styles = StyleSheet.create({

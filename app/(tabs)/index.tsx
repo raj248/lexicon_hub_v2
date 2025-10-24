@@ -23,6 +23,7 @@ import { useTabBar } from '~/context/TabBarContext';
 import { FlashList as RNFlashList } from '@shopify/flash-list';
 import scanAndAddBooks from '~/utils/scanAndAddBooks';
 import { Button } from 'react-native-paper';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export const AnimatedFlashList = Animated.createAnimatedComponent(RNFlashList<any>);
 
@@ -35,7 +36,7 @@ const CoverImage = ({ uri }: { uri?: string }) => {
   return (
     <Image
       source={{ uri: sourceUri }}
-      style={{ width: '100%', height: 220, borderRadius: 8 }}
+      style={{ width: '100%', height: 220 }}
       contentFit="cover"
       cachePolicy="memory-disk"
       placeholder={{ blurhash: randomBlurhash ?? '' }}
@@ -46,6 +47,7 @@ const CoverImage = ({ uri }: { uri?: string }) => {
 export default function Library() {
   const { hide, show } = useTabBar();
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
@@ -90,11 +92,17 @@ export default function Library() {
         style={[
           {
             width: cardWidth,
-            margin: CARD_MARGIN / 2,
+            // margin: CARD_MARGIN / 2,
+            alignContent: 'center',
+            justifyContent: 'center',
+            alignItems: 'center',
           },
         ]}>
         <Pressable
-          className="rounded-lg p-2"
+          className="mb-2 pb-2"
+          onLongPress={() => {
+            console.log('long press');
+          }}
           onPress={() => {
             const now = Date.now();
             // First: trigger shared layout animation
@@ -114,8 +122,8 @@ export default function Library() {
             backgroundColor: isDarkColorScheme
               ? darkTheme.colors.tertiaryContainer
               : lightTheme.colors.tertiaryContainer,
-            width: '100%',
-            height: 270,
+            width: '90%',
+            height: 'auto',
             shadowColor: '#000',
             shadowOpacity: 0.08,
             shadowRadius: 6,
@@ -124,10 +132,10 @@ export default function Library() {
             borderColor: isDarkColorScheme
               ? darkTheme.colors.outlineVariant
               : lightTheme.colors.outlineVariant,
-            borderRadius: 8,
+            // borderRadius: 8,
           }}>
           <CoverImage uri={item.coverImage} />
-          <View style={{ height: 36, justifyContent: 'center' }}>
+          <View style={{ flex: 1, height: 36, justifyContent: 'center' }}>
             <Text
               className="px-1 text-center font-semibold"
               variant={'footnote'}
@@ -183,9 +191,15 @@ export default function Library() {
             numColumns={numColumns}
             onScroll={scrollHandler}
             scrollEventThrottle={5}
-            // layout={JumpingTransition.duration(350)}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-            contentContainerStyle={{ padding: CARD_MARGIN / 2 }}
+            // pagingEnabled
+            centerContent
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            stickyHeaderHiddenOnScroll
+            contentContainerStyle={{
+              // padding: CARD_MARGIN / 2,
+              paddingTop: insets.top,
+            }}
             ListEmptyComponent={
               <View>
                 <Text variant={'body'}>No books found</Text>

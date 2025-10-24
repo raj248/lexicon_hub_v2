@@ -59,7 +59,7 @@ export default function TabLayout() {
             shadowRadius: 4,
           },
           swipeEnabled: true,
-          tabBarShowIcon: true,
+          // tabBarShowIcon: true,
           tabBarLabelStyle: {
             fontSize: 12,
             color: isDarkColorScheme ? 'white' : 'black',

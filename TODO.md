@@ -1,5 +1,9 @@
 # Lexicon Hub - TODO
 
+## App Navigation
+
+- [ ] Long Press on book, sticky header/ context menu
+
 ## 1. Book Progress
 
 - [ ] Save reading progress per book
