@@ -139,11 +139,12 @@ export default function DrawerExample() {
       <WebView
         automaticallyAdjustsScrollIndicatorInsets
         contentMode="mobile"
-        renderToHardwareTextureAndroid
+        // renderToHardwareTextureAndroid
+        showsVerticalScrollIndicator={false}
+        containerStyle={{ backgroundColor: 'transparent' }}
         overScrollMode="never"
         style={{ backgroundColor: 'transparent' }}
         ref={webviewRef}
-        // injectedJavaScriptBeforeContentLoaded={injectedJS}
         source={{
           html: html ?? '',
         }}
