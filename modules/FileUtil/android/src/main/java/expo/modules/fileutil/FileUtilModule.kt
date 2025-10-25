@@ -27,6 +27,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import java.io.FileOutputStream
 
+import kotlin.math.ceil
 
 class FileUtilModule : Module() {
   override fun definition() = ModuleDefinition {
@@ -365,9 +366,6 @@ class FileUtilModule : Module() {
         }
 
         // Step 2b: Find TOC href
-        // tocHref = manifestList.find { it.properties?.contains("nav") == true }?.absoluteHref
-        //     ?: manifestList.find { it.href?.endsWith(".ncx", ignoreCase = true) == true }?.absoluteHref
-
         tocHref = manifestList.find { it.href?.endsWith(".ncx", ignoreCase = true) == true }?.absoluteHref
             ?: manifestList.find { it.properties?.contains("nav") == true }?.absoluteHref
 
@@ -405,6 +403,48 @@ class FileUtilModule : Module() {
         if (!isValidImage(coverHref)) {
           coverHref = manifestList.find { isValidImage(it.href) }?.absoluteHref
         }
+
+        // --- Step 4: Character + Page Calculation ---
+        val chapterCharData = mutableListOf<Map<String, Any>>()
+        val standardCharsPerPage = 1620
+        var totalChars = 0
+
+        spineList.forEach { item ->
+          val href = item["href"] ?: return@forEach
+          val entry = zipFile.getEntry(href)
+          if (entry != null) {
+            val text = zipFile.getInputStream(entry).bufferedReader().use { it.readText() }
+            // Parse XHTML text (strip HTML)
+            val cleanText = Jsoup.parse(text).text()
+            val charCount = cleanText.length
+            val pageCount = ceil(charCount.toDouble() / standardCharsPerPage).toInt()
+            totalChars += charCount
+
+            chapterCharData.add(
+              mapOf(
+                "id" to (item["id"] ?: ""),
+                "href" to href,
+                "charCount" to charCount,
+                "pageCount" to pageCount
+              )
+            )
+          } else {
+            // Missing file in EPUB, skip safely
+            chapterCharData.add(
+              mapOf(
+                "id" to (item["id"] ?: ""),
+                "href" to href,
+                "charCount" to 0,
+                "pageCount" to 0
+              )
+            )
+          }
+        }
+
+        // Total estimated pages
+        val totalPageCount = ceil(totalChars.toDouble() / standardCharsPerPage).toInt()
+        Log.d("FileUtil", "book: $epubPath, totalChars: $totalChars, totalPageCount: $totalPageCount")
+
         val bookFileName = epubPath.substringAfterLast("/").substringBeforeLast(".")
         val baseDir = "/data/user/0/com.hub.lexicon/cache/$bookFileName"
 
@@ -420,6 +460,9 @@ class FileUtilModule : Module() {
             "toc" to (tocHref ?: "")
           ),
           "spine" to spineList,
+          "chapterStats" to chapterCharData,
+          "totalChars" to totalChars,
+          "totalPages" to totalPageCount,
           "baseDir" to baseDir
         )
 
