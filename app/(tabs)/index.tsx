@@ -57,6 +57,10 @@ export default function Library() {
     return unsubscribe;
   }, [navigation, show]);
 
+  useEffect(() => {
+    scanAndAddBooks();
+  }, []);
+
   const rawBooks = useBookStore((state) => state.books);
   const books = useMemo(
     () => Object.values(rawBooks).sort((a, b) => (b.lastOpenedAt ?? 0) - (a.lastOpenedAt ?? 0)),
@@ -76,7 +80,7 @@ export default function Library() {
   }, []);
 
   // --- Responsive layout ---
-  const CARD_MAX_WIDTH = 180; // px
+  const CARD_MAX_WIDTH = width * 0.45; // px
   const CARD_MARGIN = 15; // horizontal margin
   const numColumns = Math.floor(width / (CARD_MAX_WIDTH + CARD_MARGIN));
   const cardWidth = Math.min(CARD_MAX_WIDTH, width / numColumns - CARD_MARGIN);
@@ -91,6 +95,8 @@ export default function Library() {
         exiting={FadeOut.duration(200)}
         style={[
           {
+            // backgroundColor: 'red',
+            margin: 10,
             width: cardWidth,
             // margin: CARD_MARGIN / 2,
             alignContent: 'center',
@@ -99,7 +105,7 @@ export default function Library() {
           },
         ]}>
         <Pressable
-          className="mb-2 pb-2"
+          className=" mb-2 pb-2"
           onLongPress={() => {
             console.log('long press');
           }}
@@ -192,6 +198,8 @@ export default function Library() {
             onScroll={scrollHandler}
             scrollEventThrottle={5}
             // pagingEnabled
+
+            // style={{ flex: 1, backgroundColor: 'green', alignContent: 'center' }}
             centerContent
             refreshing={refreshing}
             onRefresh={onRefresh}
@@ -199,6 +207,7 @@ export default function Library() {
             contentContainerStyle={{
               // padding: CARD_MARGIN / 2,
               paddingTop: insets.top,
+              // paddingHorizontal: '2%',
             }}
             ListEmptyComponent={
               <View>

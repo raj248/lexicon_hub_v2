@@ -1,3 +1,5 @@
+min width sm-f05 : 411 dp
+
 # Lexicon Hub - TODO
 
 ## App Navigation
