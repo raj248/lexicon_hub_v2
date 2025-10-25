@@ -25,12 +25,32 @@ export default function DrawerExample() {
   const [open, setOpen] = React.useState(false);
 
   const { colors, isDarkColorScheme } = useColorScheme();
-  const { toc, html, goToChapter, nextChapter, prevChapter, index, title } = useChapters(
-    bookPath as string
+  const { toc, html, goToChapter, nextChapter, prevChapter, index, title, spine } = useChapters(
+    bookPath as string,
+    book?.progress?.index ?? 0
   );
+
+  const saveProgressRef = React.useRef<NodeJS.Timeout | number | null>(null);
+
+  const saveProgress = React.useCallback(
+    (href: string, index: number, scroll: number, ts: number) => {
+      // Clear previous timeout if still pending
+      if (saveProgressRef.current) clearTimeout(saveProgressRef.current);
+
+      // Wait 500ms before committing progress (bounce)
+      saveProgressRef.current = setTimeout(() => {
+        useBookStore.getState().updateProgress(bookId as string, { href, index, scroll });
+        console.log('Saved progress:', { href, index, scroll });
+      }, 500);
+    },
+    [bookId]
+  );
+
   const { fullscreen, handleMessage } = useWebViewBridge({
     onImageTap: (data) => console.log('Image tapped', data),
-    onProgress: (data) => console.log('Reading progress', data),
+    onProgress: (data) => {
+      if (spine?.[index]) saveProgress(spine?.[index].href, index, data.progress, data.timestamp);
+    },
     onSwipeEnd: (dir) => {
       if (dir === 'left') {
         nextChapter() ? setIsWebViewReady(false) : null;
@@ -44,6 +64,11 @@ export default function DrawerExample() {
     },
     onBridgeReady: () => {
       injectCss();
+      if (book?.progress) {
+        webviewRef.current?.injectJavaScript(`
+          window.ReadingProgress?.goTo(${book.progress.scroll ?? 0});
+          `);
+      }
     },
     onStylesAck: () => {
       setIsWebViewReady(true);

@@ -9,8 +9,8 @@ async function fetchChapterHtml(bookPath: string, href: string): Promise<string>
   return await FileSystem.readAsStringAsync(`file://${filePath}`);
 }
 
-export function useChapters(bookPath: string | null) {
-  const [index, setIndex] = useState(0);
+export function useChapters(bookPath: string | null, initialIndex = 0) {
+  const [index, setIndex] = useState(initialIndex);
   const queryClient = useQueryClient();
 
   // --- 1️⃣ Parse OPF and extract chapter spine
@@ -126,6 +126,7 @@ export function useChapters(bookPath: string | null) {
     toc: tocWithIndex,
     currentSelectedChapter,
     spineHrefToIndex,
+    spine: bookData?.spine,
     index,
     html,
     isLoading,

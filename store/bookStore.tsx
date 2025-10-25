@@ -18,6 +18,12 @@ const zustandStorage: StateStorage = {
   },
 };
 
+export type BookProgress = {
+  href: string; // chapter href from spine
+  index: number; // index of chapter in spine
+  scroll: number; // scroll progress (0-1)
+};
+
 export type Category = 'Light Novel' | 'Web Novel' | 'Manga' | 'Comic' | 'Book';
 
 export type Book = {
@@ -35,6 +41,8 @@ export type Book = {
   volumes?: string; // Only for Light Novels (list of volume file paths)
   addedAt?: number;
   externalLink?: string; // Store external sources for the book
+
+  progress?: BookProgress; // ← new field
 };
 
 type BookStore = {
@@ -50,6 +58,10 @@ type BookStore = {
   updateBook: (id: string, data: Partial<Book>) => void;
   removeBook: (id: string) => void;
   debugClear: () => void;
+
+  // --- new ---
+  updateProgress: (id: string, progress: BookProgress) => void;
+  getProgress: (id: string) => BookProgress | undefined;
 };
 
 export const useBookStore = create<BookStore & { hydrated: boolean }>()(
@@ -123,6 +135,21 @@ export const useBookStore = create<BookStore & { hydrated: boolean }>()(
           return { books: newBooks };
         }),
       debugClear: () => set({ books: {} }),
+      updateProgress: (id, progress) => {
+        set((state) => ({
+          books: {
+            ...state.books,
+            [id]: {
+              ...state.books[id],
+              progress,
+            },
+          },
+        }));
+      },
+
+      getProgress: (id) => {
+        return get().books[id]?.progress;
+      },
     }),
     {
       name: 'book-storage', // AsyncStorage key
