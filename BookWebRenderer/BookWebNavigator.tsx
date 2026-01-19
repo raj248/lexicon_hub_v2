@@ -69,6 +69,7 @@ export default function BookWebNavigator({ bookPath }: { bookPath: string }) {
           style={{ flex: 1 }}
           chapters={chapters ?? []}
           onChapterPress={(event: any) => console.log(event.nativeEvent)}
+          ref={undefined}
         />
       )}>
       <Drawer.Screen name="Book">
